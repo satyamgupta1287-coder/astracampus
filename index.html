@@ -55,6 +55,7 @@
     .loading {
       text-align: center;
       color: #666;
+      display: none;
     }
   </style>
 </head>
@@ -64,7 +65,7 @@
     <h2>Google Login</h2>
     <button id="loginBtn">Login with Google</button>
     <div id="error" class="error"></div>
-    <div id="loading" class="loading" style="display:none;">Redirecting...</div>
+    <div id="loading" class="loading">Redirecting to dashboard...</div>
   </div>
 
   <script type="module">
@@ -75,9 +76,7 @@
       GoogleAuthProvider,
       signInWithRedirect,
       getRedirectResult,
-      onAuthStateChanged,
-      setPersistence,
-      browserLocalPersistence
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -97,47 +96,37 @@
     const errorDiv = document.getElementById("error");
     const loadingDiv = document.getElementById("loading");
 
-    // Set persistence
-    await setPersistence(auth, browserLocalPersistence)
-      .catch(err => console.error("Persistence error:", err));
+    let isRedirecting = false;
 
-    // Handle redirect result FIRST
-    let redirectHandled = false;
+    // पहले redirect result handle करो
     getRedirectResult(auth)
       .then((result) => {
-        redirectHandled = true;
-        console.log("Redirect result:", result);
         if (result?.user) {
-          console.log("User found from redirect:", result.user.email);
+          isRedirecting = true;
           loadingDiv.style.display = "block";
           loginBtn.style.display = "none";
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 500);
+          console.log("Redirecting after login...");
+          window.location.href = "dashboard.html";
         }
       })
       .catch((error) => {
         console.error("Redirect error:", error);
-        errorDiv.textContent = "Login failed: " + error.message;
-        redirectHandled = true;
-      });
-
-    // Check auth state after redirect result
-    setTimeout(() => {
-      if (!redirectHandled) return;
-      
-      onAuthStateChanged(auth, (user) => {
-        console.log("Auth state changed:", user);
-        if (user) {
-          console.log("User logged in:", user.email);
-          loadingDiv.style.display = "block";
-          loginBtn.style.display = "none";
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 500);
+        if (error.code !== "auth/popup-closed-by-user") {
+          errorDiv.textContent = "Error: " + error.message;
         }
       });
-    }, 1000);
+
+    // फिर auth state check करो - लेकिन redirect के लिए नहीं, सिर्फ notification के लिए
+    onAuthStateChanged(auth, (user) => {
+      // अगर पहले से authenticated है तो redirect करो
+      if (user && !isRedirecting) {
+        isRedirecting = true;
+        loadingDiv.style.display = "block";
+        loginBtn.style.display = "none";
+        console.log("User already logged in, redirecting...");
+        window.location.href = "dashboard.html";
+      }
+    });
 
     // Login button handler
     loginBtn.addEventListener("click", async () => {
@@ -145,7 +134,7 @@
         errorDiv.textContent = "";
         loginBtn.disabled = true;
         loginBtn.textContent = "Logging in...";
-        console.log("Starting Google sign-in redirect...");
+        console.log("Starting Google sign-in...");
         await signInWithRedirect(auth, provider);
       } catch (error) {
         console.error("Login error:", error);
