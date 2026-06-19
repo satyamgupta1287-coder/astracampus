@@ -3,93 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <title>Attendance Dashboard</title>
   <style>
-    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; color: #2c3e50; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f5f5f5; }
+    .navbar { background: #1a252f; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .logout-btn { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+    .container { padding: 20px; max-width: 800px; margin: 0 auto; }
+    .panel { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; margin-bottom: 20px; }
+    h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
     
-    /* Top Navigation Bar */
-    .navbar { background: #1a252f; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .navbar h2 { margin: 0; font-size: 22px; font-weight: 600; }
-    .logout-btn { background: #e74c3c; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; display: none; }
-    .logout-btn:hover { background: #c0392b; }
-
-    /* Main Dashboard Layout */
-    .container { padding: 30px; max-width: 1200px; margin: 0 auto; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+    /* Stats and Cards */
+    .stat-box { background: #3498db; color: white; padding: 20px; border-radius: 8px; text-align: center; width: 150px; }
+    .user-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
     
-    /* Dashboard Cards */
-    .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-    .card h3 { margin-top: 0; border-bottom: 2px solid #f0f3f6; padding-bottom: 10px; color: #34495e; font-size: 18px; }
-    
-    /* Profile Section */
-    .profile-header { display: flex; align-items: center; gap: 15px; }
-    .profile-header img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #3498db; }
-    .profile-info h4 { margin: 0 0 5px 0; font-size: 20px; }
-    .profile-info p { margin: 0; color: #7f8c8d; font-size: 14px; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; background: #2ecc71; color: white; margin-top: 8px; font-weight: bold; }
-
-    /* Server Stats Section */
-    .stats-container { display: flex; justify-content: space-between; gap: 10px; margin-top: 15px; }
-    .stat-box { text-align: center; background: #f8f9fa; padding: 15px 10px; border-radius: 8px; flex: 1; border: 1px solid #e1e8ed; }
-    .stat-box h4 { margin: 0; color: #3498db; font-size: 22px; }
-    .stat-box p { margin: 5px 0 0; font-size: 13px; color: #7f8c8d; font-weight: 500; }
-
-    /* Server Details List */
-    .detail-list { list-style: none; padding: 0; margin: 0; }
-    .detail-list li { padding: 12px 0; border-bottom: 1px solid #f0f3f6; display: flex; justify-content: space-between; font-size: 14px; }
-    .detail-list li:last-child { border-bottom: none; }
-    .status-dot { height: 10px; width: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    /* Form Elements */
+    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-right: 10px; }
+    .btn-update { background: #f39c12; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+    .btn-update:hover { background: #e67e22; }
   </style>
 </head>
 <body>
 
   <div class="navbar">
-    <h2>⚡ CloudAdmin Panel</h2>
-    <button id="logoutBtn" class="logout-btn">Logout</button>
+    <h3 id="welcomeText">Loading...</h3>
+    <button id="logoutBtn" class="logout-btn" style="display:none;">Logout</button>
   </div>
 
   <div class="container">
-    <div class="grid">
-      
-      <div class="card">
-        <h3>User Profile</h3>
-        <div id="userData">Loading profile details...</div>
+    
+    <div id="adminPanel" class="panel">
+      <h2>Admin Dashboard (Manage Users)</h2>
+      <p>Yahan se aap kisi bhi user ka role change kar sakte hain:</p>
+      <div id="usersList">
+        <p>Loading users list...</p>
       </div>
-
-      <div class="card">
-        <h3>VPS Resources (Demo)</h3>
-        <div class="stats-container">
-          <div class="stat-box">
-            <h4>42%</h4>
-            <p>CPU Usage</p>
-          </div>
-          <div class="stat-box">
-            <h4>2.4 GB</h4>
-            <p>RAM Active</p>
-          </div>
-          <div class="stat-box">
-            <h4>14 ms</h4>
-            <p>Ping</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Active Configurations</h3>
-        <ul class="detail-list">
-          <li><span><span class="status-dot"></span> Subdomain Routing</span> <strong>Active</strong></li>
-          <li><span><span class="status-dot"></span> AWS Proxy Tunnel</span> <strong>Connected</strong></li>
-          <li><span><span class="status-dot" style="background-color: #f1c40f;"></span> Cloudflare Cache</span> <strong>Purging...</strong></li>
-          <li><span>Data Transferred (Today)</span> <strong>4.2 GB</strong></li>
-        </ul>
-      </div>
-
     </div>
+
+    <div id="teacherPanel" class="panel">
+      <h2>Teacher Dashboard</h2>
+      <p>Mark attendance for today: <strong id="todayDate"></strong></p>
+      <div id="studentList">
+        <p>Student list yahan aayegi (Next Step mein banayenge)...</p>
+      </div>
+    </div>
+
+    <div id="studentPanel" class="panel">
+      <h2>Student Dashboard</h2>
+      <p>Welcome to your attendance portal.</p>
+      <div class="stat-box">
+        <h3>0</h3>
+        <p>Total Present Days</p>
+      </div>
+    </div>
+
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    
+    // Naye imports: getDocs (saare users laane ke liye), updateDoc (role change karne ke liye)
+    import { getFirestore, doc, getDoc, setDoc, getDocs, collection, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCqSMjr5__HNV-LXZi5vQvGzfBQ46lRFNA",
@@ -102,35 +76,115 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const userData = document.getElementById("userData");
     const logoutBtn = document.getElementById("logoutBtn");
+    const welcomeText = document.getElementById("welcomeText");
+    const studentPanel = document.getElementById("studentPanel");
+    const teacherPanel = document.getElementById("teacherPanel");
+    const adminPanel = document.getElementById("adminPanel");
+    const usersListContainer = document.getElementById("usersList");
 
-    onAuthStateChanged(auth, (user) => {
+    if(document.getElementById("todayDate")) {
+      document.getElementById("todayDate").innerText = new Date().toLocaleDateString();
+    }
+
+    // Role-based routing logic
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.replace("index.html");
       } else {
-        const defaultPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-        const profilePic = user.photoURL ? user.photoURL : defaultPic;
-        const displayName = user.displayName ? user.displayName : "Admin User";
+        logoutBtn.style.display = "block";
+        const displayName = user.displayName || user.email.split('@')[0];
+        welcomeText.innerText = "Welcome, " + displayName;
 
-        userData.innerHTML = `
-          <div class="profile-header">
-            <img src="${profilePic}" alt="Profile">
-            <div class="profile-info">
-              <h4>${displayName}</h4>
-              <p>${user.email}</p>
-              <div class="badge">Verified Admin</div>
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          // Default role "student" diya jayega naye users ko
+          await setDoc(userRef, {
+            name: displayName,
+            email: user.email,
+            role: "student"
+          });
+          studentPanel.style.display = "block";
+        } else {
+          const userData = userSnap.data();
+          
+          // Role ke hisaab se panel show karo
+          if (userData.role === "admin") {
+            adminPanel.style.display = "block";
+            loadAllUsersForAdmin(); // Admin ke liye list load karo
+          } else if (userData.role === "teacher") {
+            teacherPanel.style.display = "block";
+          } else {
+            studentPanel.style.display = "block";
+          }
+        }
+      }
+    });
+
+    // Admin Panel: Load all users from Firestore
+    async function loadAllUsersForAdmin() {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      let htmlContent = "";
+
+      querySnapshot.forEach((docSnap) => {
+        const uData = docSnap.data();
+        const uid = docSnap.id;
+
+        htmlContent += `
+          <div class="user-card">
+            <div>
+              <strong>${uData.name}</strong> <br>
+              <small>${uData.email}</small>
+            </div>
+            <div>
+              <select id="role-${uid}">
+                <option value="student" ${uData.role === 'student' ? 'selected' : ''}>Student</option>
+                <option value="teacher" ${uData.role === 'teacher' ? 'selected' : ''}>Teacher</option>
+                <option value="admin" ${uData.role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+              <button class="btn-update update-role-btn" data-uid="${uid}">Update</button>
             </div>
           </div>
         `;
-        logoutBtn.style.display = "block";
+      });
+
+      usersListContainer.innerHTML = htmlContent;
+    }
+
+    // Event Delegation: Handle Update Role Clicks
+    usersListContainer.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("update-role-btn")) {
+        const btn = e.target;
+        const uid = btn.getAttribute("data-uid");
+        const newRole = document.getElementById(`role-${uid}`).value;
+
+        btn.textContent = "Updating...";
+        btn.disabled = true;
+
+        try {
+          // Firestore mein role update karna
+          const userRef = doc(db, "users", uid);
+          await updateDoc(userRef, { role: newRole });
+          
+          btn.textContent = "Saved ✓";
+          btn.style.background = "#2ecc71";
+          setTimeout(() => {
+            btn.textContent = "Update";
+            btn.style.background = "#f39c12";
+            btn.disabled = false;
+          }, 2000);
+        } catch (error) {
+          console.error("Error updating role:", error);
+          btn.textContent = "Failed!";
+        }
       }
     });
 
     logoutBtn.addEventListener("click", async () => {
-      logoutBtn.disabled = true;
-      logoutBtn.textContent = "Logging out...";
       await signOut(auth);
     });
   </script>
