@@ -34,6 +34,27 @@
       color:#fff;
       font-size:16px;
       cursor:pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background:#357ae8;
+    }
+
+    button:disabled {
+      background:#ccc;
+      cursor: not-allowed;
+    }
+
+    .error {
+      color: #d32f2f;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
     }
   </style>
 </head>
@@ -42,6 +63,8 @@
   <div class="card">
     <h2>Google Login</h2>
     <button id="loginBtn">Login with Google</button>
+    <div id="error" class="error"></div>
+    <div id="loading" class="loading" style="display:none;">Redirecting...</div>
   </div>
 
   <script type="module">
@@ -52,7 +75,9 @@
       GoogleAuthProvider,
       signInWithRedirect,
       getRedirectResult,
-      onAuthStateChanged
+      onAuthStateChanged,
+      setPersistence,
+      browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -69,24 +94,64 @@
     const provider = new GoogleAuthProvider();
 
     const loginBtn = document.getElementById("loginBtn");
+    const errorDiv = document.getElementById("error");
+    const loadingDiv = document.getElementById("loading");
 
-    loginBtn.addEventListener("click", async () => {
-      await signInWithRedirect(auth, provider);
-    });
+    // Set persistence
+    await setPersistence(auth, browserLocalPersistence)
+      .catch(err => console.error("Persistence error:", err));
 
+    // Handle redirect result FIRST
+    let redirectHandled = false;
     getRedirectResult(auth)
       .then((result) => {
+        redirectHandled = true;
+        console.log("Redirect result:", result);
         if (result?.user) {
-          window.location.href = "dashboard.html";
+          console.log("User found from redirect:", result.user.email);
+          loadingDiv.style.display = "block";
+          loginBtn.style.display = "none";
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 500);
         }
       })
       .catch((error) => {
-        console.log(error);
+        console.error("Redirect error:", error);
+        errorDiv.textContent = "Login failed: " + error.message;
+        redirectHandled = true;
       });
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.href = "dashboard.html";
+    // Check auth state after redirect result
+    setTimeout(() => {
+      if (!redirectHandled) return;
+      
+      onAuthStateChanged(auth, (user) => {
+        console.log("Auth state changed:", user);
+        if (user) {
+          console.log("User logged in:", user.email);
+          loadingDiv.style.display = "block";
+          loginBtn.style.display = "none";
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 500);
+        }
+      });
+    }, 1000);
+
+    // Login button handler
+    loginBtn.addEventListener("click", async () => {
+      try {
+        errorDiv.textContent = "";
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Logging in...";
+        console.log("Starting Google sign-in redirect...");
+        await signInWithRedirect(auth, provider);
+      } catch (error) {
+        console.error("Login error:", error);
+        errorDiv.textContent = "Error: " + error.message;
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login with Google";
       }
     });
   </script>
