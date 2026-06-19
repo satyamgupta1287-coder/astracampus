@@ -7,8 +7,8 @@
   <style>
     body{ margin:0; height:100vh; display:flex; justify-content:center; align-items:center; background:#f5f5f5; font-family:Arial,sans-serif; }
     .card{ background:#fff; width:320px; padding:30px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1); text-align:center; }
-    img{ width:100px; height:100px; border-radius:50%; margin-bottom:15px; }
-    button{ width:100%; padding:14px; border:none; border-radius:10px; background:#e53935; color:#fff; cursor:pointer; margin-top:20px; }
+    img{ width:100px; height:100px; border-radius:50%; margin-bottom:15px; object-fit: cover; }
+    button{ width:100%; padding:14px; border:none; border-radius:10px; background:#e53935; color:#fff; cursor:pointer; margin-top:20px; font-size: 16px; }
   </style>
 </head>
 <body>
@@ -19,7 +19,6 @@
   </div>
 
   <script type="module">
-    // Version 10.12.2 kiya gaya hai
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -38,28 +37,30 @@
     const userData = document.getElementById("userData");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    // Check if user is valid
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // Bina login ke access kiya toh wapas index.html par
         window.location.replace("index.html");
       } else {
-        // User mil gaya, data show karo
+        // Agar user ki photo nahi hai (email signup), toh default avatar lagao
+        const defaultPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        const profilePic = user.photoURL ? user.photoURL : defaultPic;
+        
+        // Agar display name set nahi hai, toh email ka starting part dikhao
+        const displayName = user.displayName ? user.displayName : "New User";
+
         userData.innerHTML = `
-          <img src="${user.photoURL}" alt="Profile">
-          <h2>${user.displayName}</h2>
+          <img src="${profilePic}" alt="Profile">
+          <h2>${displayName}</h2>
           <p>${user.email}</p>
         `;
         logoutBtn.style.display = "block";
       }
     });
 
-    // Logout logic
     logoutBtn.addEventListener("click", async () => {
       logoutBtn.disabled = true;
       logoutBtn.textContent = "Logging out...";
       await signOut(auth);
-      // Logout hone ke baad onAuthStateChanged khud index.html par bhej dega
     });
   </script>
 </body>
