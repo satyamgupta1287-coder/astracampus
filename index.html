@@ -96,35 +96,54 @@
     const errorDiv = document.getElementById("error");
     const loadingDiv = document.getElementById("loading");
 
-    let isRedirecting = false;
+    // Check if we're already redirecting to avoid infinite loop
+    const isAlreadyRedirecting = sessionStorage.getItem("redirecting");
+
+    if (isAlreadyRedirecting) {
+      sessionStorage.removeItem("redirecting");
+      console.log("Preventing redirect loop");
+    }
 
     // पहले redirect result handle करो
     getRedirectResult(auth)
       .then((result) => {
+        console.log("Redirect result:", result);
         if (result?.user) {
-          isRedirecting = true;
+          console.log("User found from Google redirect:", result.user.email);
+          sessionStorage.setItem("redirecting", "true");
           loadingDiv.style.display = "block";
           loginBtn.style.display = "none";
-          console.log("Redirecting after login...");
           window.location.href = "dashboard.html";
+        } else {
+          console.log("No redirect result user");
         }
       })
       .catch((error) => {
         console.error("Redirect error:", error);
         if (error.code !== "auth/popup-closed-by-user") {
-          errorDiv.textContent = "Error: " + error.message;
+          errorDiv.textContent = "Login failed: " + error.message;
         }
       });
 
-    // फिर auth state check करो - लेकिन redirect के लिए नहीं, सिर्फ notification के लिए
+    // Check if already authenticated - but ONLY first time page loads
+    let authStateChecked = false;
     onAuthStateChanged(auth, (user) => {
-      // अगर पहले से authenticated है तो redirect करो
-      if (user && !isRedirecting) {
-        isRedirecting = true;
-        loadingDiv.style.display = "block";
-        loginBtn.style.display = "none";
-        console.log("User already logged in, redirecting...");
-        window.location.href = "dashboard.html";
+      if (!authStateChecked) {
+        authStateChecked = true;
+        
+        if (user) {
+          console.log("User already authenticated:", user.email);
+          // Check if this is NOT from redirect (redirect sets session storage)
+          if (!isAlreadyRedirecting) {
+            sessionStorage.setItem("redirecting", "true");
+            loadingDiv.style.display = "block";
+            loginBtn.style.display = "none";
+            console.log("Redirecting authenticated user to dashboard");
+            window.location.href = "dashboard.html";
+          }
+        } else {
+          console.log("No authenticated user - staying on login page");
+        }
       }
     });
 
@@ -138,7 +157,9 @@
         await signInWithRedirect(auth, provider);
       } catch (error) {
         console.error("Login error:", error);
-        errorDiv.textContent = "Error: " + error.message;
+        if (error.code !== "auth/popup-closed-by-user") {
+          errorDiv.textContent = "Error: " + error.message;
+        }
         loginBtn.disabled = false;
         loginBtn.textContent = "Login with Google";
       }
