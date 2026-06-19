@@ -3,19 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Admin Dashboard</title>
   <style>
-    body{ margin:0; height:100vh; display:flex; justify-content:center; align-items:center; background:#f5f5f5; font-family:Arial,sans-serif; }
-    .card{ background:#fff; width:320px; padding:30px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1); text-align:center; }
-    img{ width:100px; height:100px; border-radius:50%; margin-bottom:15px; object-fit: cover; }
-    button{ width:100%; padding:14px; border:none; border-radius:10px; background:#e53935; color:#fff; cursor:pointer; margin-top:20px; font-size: 16px; }
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f5; color: #2c3e50; }
+    
+    /* Top Navigation Bar */
+    .navbar { background: #1a252f; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .navbar h2 { margin: 0; font-size: 22px; font-weight: 600; }
+    .logout-btn { background: #e74c3c; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; display: none; }
+    .logout-btn:hover { background: #c0392b; }
+
+    /* Main Dashboard Layout */
+    .container { padding: 30px; max-width: 1200px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+    
+    /* Dashboard Cards */
+    .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .card h3 { margin-top: 0; border-bottom: 2px solid #f0f3f6; padding-bottom: 10px; color: #34495e; font-size: 18px; }
+    
+    /* Profile Section */
+    .profile-header { display: flex; align-items: center; gap: 15px; }
+    .profile-header img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #3498db; }
+    .profile-info h4 { margin: 0 0 5px 0; font-size: 20px; }
+    .profile-info p { margin: 0; color: #7f8c8d; font-size: 14px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; background: #2ecc71; color: white; margin-top: 8px; font-weight: bold; }
+
+    /* Server Stats Section */
+    .stats-container { display: flex; justify-content: space-between; gap: 10px; margin-top: 15px; }
+    .stat-box { text-align: center; background: #f8f9fa; padding: 15px 10px; border-radius: 8px; flex: 1; border: 1px solid #e1e8ed; }
+    .stat-box h4 { margin: 0; color: #3498db; font-size: 22px; }
+    .stat-box p { margin: 5px 0 0; font-size: 13px; color: #7f8c8d; font-weight: 500; }
+
+    /* Server Details List */
+    .detail-list { list-style: none; padding: 0; margin: 0; }
+    .detail-list li { padding: 12px 0; border-bottom: 1px solid #f0f3f6; display: flex; justify-content: space-between; font-size: 14px; }
+    .detail-list li:last-child { border-bottom: none; }
+    .status-dot { height: 10px; width: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; margin-right: 5px; }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <div id="userData">Loading Profile...</div>
-    <button id="logoutBtn" style="display: none;">Logout</button>
+  <div class="navbar">
+    <h2>⚡ CloudAdmin Panel</h2>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      
+      <div class="card">
+        <h3>User Profile</h3>
+        <div id="userData">Loading profile details...</div>
+      </div>
+
+      <div class="card">
+        <h3>VPS Resources (Demo)</h3>
+        <div class="stats-container">
+          <div class="stat-box">
+            <h4>42%</h4>
+            <p>CPU Usage</p>
+          </div>
+          <div class="stat-box">
+            <h4>2.4 GB</h4>
+            <p>RAM Active</p>
+          </div>
+          <div class="stat-box">
+            <h4>14 ms</h4>
+            <p>Ping</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Active Configurations</h3>
+        <ul class="detail-list">
+          <li><span><span class="status-dot"></span> Subdomain Routing</span> <strong>Active</strong></li>
+          <li><span><span class="status-dot"></span> AWS Proxy Tunnel</span> <strong>Connected</strong></li>
+          <li><span><span class="status-dot" style="background-color: #f1c40f;"></span> Cloudflare Cache</span> <strong>Purging...</strong></li>
+          <li><span>Data Transferred (Today)</span> <strong>4.2 GB</strong></li>
+        </ul>
+      </div>
+
+    </div>
   </div>
 
   <script type="module">
@@ -41,17 +110,19 @@
       if (!user) {
         window.location.replace("index.html");
       } else {
-        // Agar user ki photo nahi hai (email signup), toh default avatar lagao
         const defaultPic = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
         const profilePic = user.photoURL ? user.photoURL : defaultPic;
-        
-        // Agar display name set nahi hai, toh email ka starting part dikhao
-        const displayName = user.displayName ? user.displayName : "New User";
+        const displayName = user.displayName ? user.displayName : "Admin User";
 
         userData.innerHTML = `
-          <img src="${profilePic}" alt="Profile">
-          <h2>${displayName}</h2>
-          <p>${user.email}</p>
+          <div class="profile-header">
+            <img src="${profilePic}" alt="Profile">
+            <div class="profile-info">
+              <h4>${displayName}</h4>
+              <p>${user.email}</p>
+              <div class="badge">Verified Admin</div>
+            </div>
+          </div>
         `;
         logoutBtn.style.display = "block";
       }
