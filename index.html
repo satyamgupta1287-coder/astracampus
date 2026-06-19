@@ -4,59 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Login</title>
-
   <style>
-    body{
-      margin:0;
-      height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      background:#f5f5f5;
-      font-family:Arial,sans-serif;
-    }
-
-    .card{
-      background:#fff;
-      padding:30px;
-      border-radius:15px;
-      box-shadow:0 5px 20px rgba(0,0,0,.1);
-      text-align:center;
-      width:300px;
-    }
-
-    button{
-      width:100%;
-      padding:14px;
-      border:none;
-      border-radius:10px;
-      background:#4285F4;
-      color:#fff;
-      font-size:16px;
-      cursor:pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background:#357ae8;
-    }
-
-    button:disabled {
-      background:#ccc;
-      cursor: not-allowed;
-    }
-
-    .error {
-      color: #d32f2f;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    .loading {
-      text-align: center;
-      color: #666;
-      display: none;
-    }
+    body{ margin:0; height:100vh; display:flex; justify-content:center; align-items:center; background:#f5f5f5; font-family:Arial,sans-serif; }
+    .card{ background:#fff; padding:30px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1); text-align:center; width:300px; }
+    button{ width:100%; padding:14px; border:none; border-radius:10px; background:#4285F4; color:#fff; font-size:16px; cursor:pointer; transition: all 0.3s ease; }
+    button:hover { background:#357ae8; }
+    button:disabled { background:#ccc; cursor: not-allowed; }
+    .error { color: #d32f2f; margin-top: 10px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -65,19 +19,12 @@
     <h2>Google Login</h2>
     <button id="loginBtn">Login with Google</button>
     <div id="error" class="error"></div>
-    <div id="loading" class="loading">Redirecting to dashboard...</div>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithRedirect,
-      getRedirectResult,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    // Version 10.12.2 kiya gaya hai
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCqSMjr5__HNV-LXZi5vQvGzfBQ46lRFNA",
@@ -94,77 +41,30 @@
 
     const loginBtn = document.getElementById("loginBtn");
     const errorDiv = document.getElementById("error");
-    const loadingDiv = document.getElementById("loading");
 
-    // Check if we're already redirecting to avoid infinite loop
-    const isAlreadyRedirecting = sessionStorage.getItem("redirecting");
-
-    if (isAlreadyRedirecting) {
-      sessionStorage.removeItem("redirecting");
-      console.log("Preventing redirect loop");
-    }
-
-    // पहले redirect result handle करो
-    getRedirectResult(auth)
-      .then((result) => {
-        console.log("Redirect result:", result);
-        if (result?.user) {
-          console.log("User found from Google redirect:", result.user.email);
-          sessionStorage.setItem("redirecting", "true");
-          loadingDiv.style.display = "block";
-          loginBtn.style.display = "none";
-          window.location.href = "dashboard.html";
-        } else {
-          console.log("No redirect result user");
-        }
-      })
-      .catch((error) => {
-        console.error("Redirect error:", error);
-        if (error.code !== "auth/popup-closed-by-user") {
-          errorDiv.textContent = "Login failed: " + error.message;
-        }
-      });
-
-    // Check if already authenticated - but ONLY first time page loads
-    let authStateChecked = false;
+    // Agar user pehle se login hai, sidha dashboard bhejo
     onAuthStateChanged(auth, (user) => {
-      if (!authStateChecked) {
-        authStateChecked = true;
-        
-        if (user) {
-          console.log("User already authenticated:", user.email);
-          // Check if this is NOT from redirect (redirect sets session storage)
-          if (!isAlreadyRedirecting) {
-            sessionStorage.setItem("redirecting", "true");
-            loadingDiv.style.display = "block";
-            loginBtn.style.display = "none";
-            console.log("Redirecting authenticated user to dashboard");
-            window.location.href = "dashboard.html";
-          }
-        } else {
-          console.log("No authenticated user - staying on login page");
-        }
+      if (user) {
+        window.location.replace("dashboard.html");
       }
     });
 
-    // Login button handler
+    // Login logic
     loginBtn.addEventListener("click", async () => {
       try {
         errorDiv.textContent = "";
         loginBtn.disabled = true;
         loginBtn.textContent = "Logging in...";
-        console.log("Starting Google sign-in...");
-        await signInWithRedirect(auth, provider);
+        
+        await signInWithPopup(auth, provider);
+        // Login successful hone par onAuthStateChanged khud dashboard par bhej dega
       } catch (error) {
         console.error("Login error:", error);
-        if (error.code !== "auth/popup-closed-by-user") {
-          errorDiv.textContent = "Error: " + error.message;
-        }
+        errorDiv.textContent = "Error: " + error.message;
         loginBtn.disabled = false;
         loginBtn.textContent = "Login with Google";
       }
     });
   </script>
-
 </body>
 </html>
