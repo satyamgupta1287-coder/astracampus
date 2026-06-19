@@ -3,28 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google Login</title>
+  <title>Login / Sign Up</title>
   <style>
     body{ margin:0; height:100vh; display:flex; justify-content:center; align-items:center; background:#f5f5f5; font-family:Arial,sans-serif; }
     .card{ background:#fff; padding:30px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1); text-align:center; width:300px; }
-    button{ width:100%; padding:14px; border:none; border-radius:10px; background:#4285F4; color:#fff; font-size:16px; cursor:pointer; transition: all 0.3s ease; }
-    button:hover { background:#357ae8; }
+    
+    /* Naye Input Fields ke liye styling */
+    input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+    
+    button{ width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; cursor:pointer; transition: all 0.3s ease; margin-bottom: 10px; }
+    
+    /* Alag-alag buttons ke colors */
+    .btn-login { background:#4CAF50; color:#fff; }
+    .btn-login:hover { background:#45a049; }
+    
+    .btn-signup { background:#2196F3; color:#fff; }
+    .btn-signup:hover { background:#1976D2; }
+    
+    .btn-google { background:#4285F4; color:#fff; }
+    .btn-google:hover { background:#357ae8; }
+    
     button:disabled { background:#ccc; cursor: not-allowed; }
     .error { color: #d32f2f; margin-top: 10px; font-size: 14px; }
+    hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>Google Login</h2>
-    <button id="loginBtn">Login with Google</button>
+    <h2>Welcome</h2>
+    
+    <input type="email" id="email" placeholder="Enter Email" required>
+    <input type="password" id="password" placeholder="Enter Password" required>
+    
+    <button id="loginBtn" class="btn-login">Login</button>
+    <button id="signupBtn" class="btn-signup">Create Account</button>
+    
+    <hr>
+    
+    <button id="googleBtn" class="btn-google">Login with Google</button>
+    
     <div id="error" class="error"></div>
   </div>
 
   <script type="module">
-    // Version 10.12.2 kiya gaya hai
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    
+    // Yahan humne naye Auth functions import kiye hain
+    import { 
+      getAuth, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCqSMjr5__HNV-LXZi5vQvGzfBQ46lRFNA",
@@ -39,30 +72,67 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
+    // HTML Elements
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
     const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const googleBtn = document.getElementById("googleBtn");
     const errorDiv = document.getElementById("error");
 
-    // Agar user pehle se login hai, sidha dashboard bhejo
+    // Agar user logged in hai toh dashboard bhejo
     onAuthStateChanged(auth, (user) => {
       if (user) {
         window.location.replace("dashboard.html");
       }
     });
 
-    // Login logic
+    // 1. Naya Account Banane ka Logic (Sign Up)
+    signupBtn.addEventListener("click", async () => {
+      try {
+        errorDiv.textContent = "";
+        if(!emailInput.value || !passwordInput.value) throw new Error("Email aur Password zaroori hai!");
+        
+        signupBtn.disabled = true;
+        signupBtn.textContent = "Creating...";
+        
+        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        signupBtn.disabled = false;
+        signupBtn.textContent = "Create Account";
+      }
+    });
+
+    // 2. Email/Password se Login karne ka Logic
     loginBtn.addEventListener("click", async () => {
       try {
         errorDiv.textContent = "";
+        if(!emailInput.value || !passwordInput.value) throw new Error("Email aur Password zaroori hai!");
+
         loginBtn.disabled = true;
         loginBtn.textContent = "Logging in...";
         
-        await signInWithPopup(auth, provider);
-        // Login successful hone par onAuthStateChanged khud dashboard par bhej dega
+        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
       } catch (error) {
-        console.error("Login error:", error);
-        errorDiv.textContent = "Error: " + error.message;
+        errorDiv.textContent = error.message;
         loginBtn.disabled = false;
-        loginBtn.textContent = "Login with Google";
+        loginBtn.textContent = "Login";
+      }
+    });
+
+    // 3. Google Login (Tumhara purana logic)
+    googleBtn.addEventListener("click", async () => {
+      try {
+        errorDiv.textContent = "";
+        googleBtn.disabled = true;
+        googleBtn.textContent = "Please wait...";
+        
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        googleBtn.disabled = false;
+        googleBtn.textContent = "Login with Google";
       }
     });
   </script>
