@@ -3,18 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Login</title>
+    <title>School Portal Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
 
-<div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-sm text-center">
-    <h1 class="text-2xl font-bold mb-6">Welcome to School Portal</h1>
-    <p class="text-gray-600 mb-6">Please login to continue to your dashboard.</p>
+<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
+    <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-md">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">Welcome Back</h1>
+        <p class="text-sm text-gray-500 mt-1">Please enter your details to sign in</p>
+    </div>
     
-    <a href="admin/admin.html" class="block bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Go to Admin</a>
-    <a href="student/admin.html" class="block mt-4 bg-gray-600 text-white py-3 rounded-xl font-bold hover:bg-gray-700 transition">Go to Student</a>
+    <form id="loginForm" class="space-y-5" onsubmit="return false;">
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
+            <input type="email" id="email" required placeholder="admin@school.com" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
+            <input type="password" id="password" required placeholder="••••••••" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+        </div>
+
+        <p id="errorMsg" class="text-red-500 text-sm hidden font-bold text-center bg-red-50 p-2 rounded-lg border border-red-100"></p>
+
+        <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition flex justify-center items-center">
+            Sign In
+        </button>
+    </form>
 </div>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script type="module">
+    import { auth, db } from './js/firebase-init.js';
+    import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // 1. Agar user pehle se login hai, toh seedha andar bhej do
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            loginBtn.innerHTML = 'Redirecting...';
+            checkRoleAndRedirect(user.uid);
+        }
+    });
+
+    // 2. Naya Login submit hone par
+    loginForm.addEventListener('submit', async () => {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        loginBtn.innerHTML = 'Signing in...';
+        loginBtn.disabled = true;
+        errorMsg.classList.add('hidden');
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            await checkRoleAndRedirect(userCredential.user.uid);
+        } catch (error) {
+            errorMsg.innerText = error.message.replace("Firebase: ", "");
+            errorMsg.classList.remove('hidden');
+            loginBtn.innerHTML = 'Sign In';
+            loginBtn.disabled = false;
+        }
+    });
+
+    // 3. User ka Role check karne ka function
+    async function checkRoleAndRedirect(uid) {
+        try {
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const userData = docSnap.data();
+                if (userData.role === "admin") {
+                    window.location.href = "admin/admin.html"; // Admin Dashboard
+                } else if (userData.role === "student") {
+                    window.location.href = "student/dashboard.html"; // Student Dashboard
+                } else {
+                    throw new Error("Account is not active or role missing.");
+                }
+            } else {
+                errorMsg.innerText = "Error: Database me user record nahi mila!";
+                errorMsg.classList.remove('hidden');
+                loginBtn.innerHTML = 'Sign In';
+                loginBtn.disabled = false;
+                auth.signOut();
+            }
+        } catch (err) {
+            errorMsg.innerText = err.message;
+            errorMsg.classList.remove('hidden');
+            loginBtn.innerHTML = 'Sign In';
+            loginBtn.disabled = false;
+        }
+    }
+</script>
 </body>
 </html>
