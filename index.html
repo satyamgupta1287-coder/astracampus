@@ -9,7 +9,9 @@
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
 
-<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
+<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100 relative overflow-hidden">
+    
+    <!-- Header -->
     <div class="text-center mb-6">
         <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-md">
             <i class="fas fa-graduation-cap"></i>
@@ -17,45 +19,98 @@
         <h1 class="text-2xl font-bold text-gray-800" id="formTitle">Welcome Back</h1>
         <p class="text-sm text-gray-500 mt-1" id="formSubtitle">Please enter your details to sign in</p>
     </div>
-    
-    <form id="authForm" class="space-y-4" onsubmit="return false;">
-        <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
-            <input type="email" id="email" required placeholder="name@school.com" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
-        </div>
-        
-        <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
-            <input type="password" id="password" required placeholder="••••••••" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+
+    <!-- Error Message Display -->
+    <p id="errorMsg" class="text-red-500 text-sm hidden font-bold text-center bg-red-50 p-2 rounded-lg border border-red-100 mb-4"></p>
+
+    <!-- ============================================== -->
+    <!-- SECTION 1: MAIN AUTH (EMAIL & GOOGLE)          -->
+    <!-- ============================================== -->
+    <div id="mainAuthSection" class="block transition-all duration-300">
+        <form id="authForm" class="space-y-4" onsubmit="return false;">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
+                <input type="email" id="email" required placeholder="name@school.com" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
+                <input type="password" id="password" required placeholder="••••••••" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-4 text-center">
+            <button id="toggleModeBtn" class="text-sm font-bold text-blue-600 hover:underline">Don't have an account? Create one</button>
         </div>
 
-        <p id="errorMsg" class="text-red-500 text-sm hidden font-bold text-center bg-red-50 p-2 rounded-lg border border-red-100"></p>
+        <div class="relative flex items-center justify-center w-full mt-6 mb-6">
+            <div class="absolute w-full border-t border-gray-200"></div>
+            <span class="bg-white px-3 text-xs text-gray-400 font-bold uppercase relative z-10">OR</span>
+        </div>
 
-        <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition">
-            Sign In
+        <div class="space-y-3">
+            <!-- Google Login -->
+            <button id="googleBtn" class="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 shadow-sm transition flex justify-center items-center gap-3">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+                Continue with Google
+            </button>
+            
+            <!-- Phone Login Trigger -->
+            <button id="showPhoneAuthBtn" class="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 shadow-sm transition flex justify-center items-center gap-3">
+                <i class="fas fa-phone-alt text-blue-500 text-lg"></i>
+                Continue with Phone
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- SECTION 2: PHONE AUTHENTICATION (OTP)          -->
+    <!-- ============================================== -->
+    <div id="phoneAuthSection" class="hidden transition-all duration-300">
+        <button id="backToMainBtn" class="text-xs font-bold text-gray-500 hover:text-blue-600 mb-4 flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+            <i class="fas fa-arrow-left"></i> Back to Email Login
         </button>
-    </form>
 
-    <div class="mt-4 text-center">
-        <button id="toggleModeBtn" class="text-sm font-bold text-blue-600 hover:underline">Don't have an account? Create one</button>
+        <div id="recaptcha-container" class="mb-4 flex justify-center"></div>
+
+        <!-- Phone Number Input -->
+        <div id="phoneInputBlock" class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" id="phoneNumber" placeholder="+91 9876543210" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+                <p class="text-[10px] text-gray-400 mt-1 font-medium">* Include country code (e.g., +91 for India)</p>
+            </div>
+            
+            <button id="sendOtpBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition flex justify-center items-center gap-2">
+                <i class="fas fa-paper-plane"></i> Send OTP
+            </button>
+        </div>
+
+        <!-- OTP Input (Initially Hidden) -->
+        <div id="otpInputBlock" class="space-y-4 hidden">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Enter 6-digit OTP</label>
+                <input type="number" id="otpCode" placeholder="123456" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500 bg-gray-50 transition text-center tracking-[0.5em] font-bold text-lg">
+            </div>
+            
+            <button id="verifyOtpBtn" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl hover:bg-green-700 shadow-md transition flex justify-center items-center gap-2">
+                <i class="fas fa-check-circle"></i> Verify & Login
+            </button>
+        </div>
     </div>
 
-    <div class="relative flex items-center justify-center w-full mt-6 mb-6">
-        <div class="absolute w-full border-t border-gray-200"></div>
-        <span class="bg-white px-3 text-xs text-gray-400 font-bold uppercase relative z-10">OR</span>
-    </div>
-
-    <button id="googleBtn" class="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 shadow-sm transition flex justify-center items-center gap-3">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
-        Continue with Google
-    </button>
 </div>
 
 <script type="module">
     import { auth, db } from './js/firebase-init.js';
-    import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
     import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+    // DOM Elements
     const authForm = document.getElementById('authForm');
     const submitBtn = document.getElementById('submitBtn');
     const errorMsg = document.getElementById('errorMsg');
@@ -63,11 +118,22 @@
     const googleBtn = document.getElementById('googleBtn');
     const formTitle = document.getElementById('formTitle');
     const formSubtitle = document.getElementById('formSubtitle');
+    
+    // Phone UI Elements
+    const mainAuthSection = document.getElementById('mainAuthSection');
+    const phoneAuthSection = document.getElementById('phoneAuthSection');
+    const showPhoneAuthBtn = document.getElementById('showPhoneAuthBtn');
+    const backToMainBtn = document.getElementById('backToMainBtn');
+    const phoneInputBlock = document.getElementById('phoneInputBlock');
+    const otpInputBlock = document.getElementById('otpInputBlock');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
 
     let isLoginMode = true;
     let isProcessingAction = false;
+    let recaptchaVerifier = null;
 
-    // Toggle Mode
+    // --- TOGGLE MODES (EMAIL/PHONE) ---
     toggleModeBtn.addEventListener('click', () => {
         isLoginMode = !isLoginMode;
         if (isLoginMode) {
@@ -83,21 +149,39 @@
         }
     });
 
-    // Auto-Login Check
+    showPhoneAuthBtn.addEventListener('click', () => {
+        mainAuthSection.classList.add('hidden');
+        phoneAuthSection.classList.remove('hidden');
+        formTitle.innerText = "Phone Login";
+        formSubtitle.innerText = "Secure login using OTP";
+        errorMsg.classList.add('hidden');
+        initRecaptcha(); // Load Recaptcha only when phone mode opens
+    });
+
+    backToMainBtn.addEventListener('click', () => {
+        phoneAuthSection.classList.add('hidden');
+        mainAuthSection.classList.remove('hidden');
+        phoneInputBlock.classList.remove('hidden');
+        otpInputBlock.classList.add('hidden');
+        formTitle.innerText = isLoginMode ? "Welcome Back" : "Create Account";
+        formSubtitle.innerText = isLoginMode ? "Please enter your details to sign in" : "Sign up to access the portal";
+        errorMsg.classList.add('hidden');
+    });
+
+    // --- AUTO-LOGIN CHECK ---
     onAuthStateChanged(auth, async (user) => {
         if (user && !isProcessingAction) {
-            submitBtn.innerHTML = 'Redirecting...';
             checkRoleAndRedirect(user);
         }
     });
 
-    // Email/Password Sign In / Sign Up
+    // --- EMAIL / PASSWORD AUTH ---
     authForm.addEventListener('submit', async () => {
         isProcessingAction = true;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
-        submitBtn.innerHTML = 'Processing...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
         submitBtn.disabled = true;
         errorMsg.classList.add('hidden');
 
@@ -117,10 +201,12 @@
             }
         } catch (error) {
             showError(error.message);
+            submitBtn.innerHTML = isLoginMode ? 'Sign In' : 'Sign Up';
+            submitBtn.disabled = false;
         }
     });
 
-    // Google Sign In
+    // --- GOOGLE AUTH ---
     googleBtn.addEventListener('click', async () => {
         isProcessingAction = true;
         const provider = new GoogleAuthProvider();
@@ -132,7 +218,62 @@
         }
     });
 
-    // Smart Redirect Function (Database record missing hone par automatic bana dega)
+    // --- PHONE (OTP) AUTH LOGIC ---
+    function initRecaptcha() {
+        if(!recaptchaVerifier) {
+            recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                'size': 'invisible', // Invisible mode prevents annoying picture puzzles if possible
+                'callback': (response) => {
+                    // reCAPTCHA solved
+                }
+            }, auth);
+        }
+    }
+
+    sendOtpBtn.addEventListener('click', () => {
+        let phoneNumber = document.getElementById('phoneNumber').value.trim();
+        // Auto add +91 if user forgets, but it's better they add it. Let's force strict checking.
+        if (!phoneNumber.startsWith("+")) {
+            return showError("Please enter country code (e.g., +919876543210)");
+        }
+
+        sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+        sendOtpBtn.disabled = true;
+        errorMsg.classList.add('hidden');
+
+        signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier)
+            .then((confirmationResult) => {
+                window.confirmationResult = confirmationResult;
+                phoneInputBlock.classList.add('hidden');
+                otpInputBlock.classList.remove('hidden');
+            }).catch((error) => {
+                showError("OTP Failed: " + error.message);
+                sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Send OTP';
+                sendOtpBtn.disabled = false;
+                // Reset recaptcha for next attempt
+                if(recaptchaVerifier) recaptchaVerifier.render().then(widgetId => grecaptcha.reset(widgetId));
+            });
+    });
+
+    verifyOtpBtn.addEventListener('click', () => {
+        const code = document.getElementById('otpCode').value;
+        if(code.length !== 6) return showError("Please enter valid 6-digit OTP");
+
+        isProcessingAction = true;
+        verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verifying...';
+        verifyOtpBtn.disabled = true;
+
+        window.confirmationResult.confirm(code).then(async (result) => {
+            await checkRoleAndRedirect(result.user);
+        }).catch((error) => {
+            showError("Invalid OTP! Try again.");
+            verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Verify & Login';
+            verifyOtpBtn.disabled = false;
+            isProcessingAction = false;
+        });
+    });
+
+    // --- DATABASE & REDIRECT LOGIC ---
     async function checkRoleAndRedirect(user) {
         try {
             const docRef = doc(db, "users", user.uid);
@@ -142,7 +283,9 @@
             if (!docSnap.exists()) {
                 await setDoc(docRef, {
                     name: user.displayName || "Student",
-                    email: user.email,
+                    // Phone auth users don't have email by default, so we save their phone number instead
+                    email: user.email || user.phoneNumber || "No Email", 
+                    mobile: user.phoneNumber || "",
                     role: "student", // Pehle default student banega
                     createdAt: serverTimestamp()
                 });
@@ -161,10 +304,10 @@
     }
 
     function showError(msg) {
-        errorMsg.innerText = msg.replace("Firebase: ", "");
+        // Clean up Firebase error formats for better UX
+        let cleanMsg = msg.replace("Firebase: ", "").replace("Error (auth/", "").replace(").", "");
+        errorMsg.innerText = cleanMsg;
         errorMsg.classList.remove('hidden');
-        submitBtn.innerHTML = isLoginMode ? 'Sign In' : 'Sign Up';
-        submitBtn.disabled = false;
         isProcessingAction = false;
     }
 </script>
