@@ -57,10 +57,17 @@
         <i class="fas fa-cloud-upload-alt mr-2"></i> Publish Full Test
     </button>
 
-    <div class="bg-white rounded-2xl shadow-sm p-6">
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
         <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Active Published Tests</h2>
         <div id="testList" class="space-y-3">
             <p class="text-center text-sm text-gray-400 py-4">Loading tests...</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i class="fas fa-chart-bar text-purple-500 mr-2"></i>Student Results</h2>
+        <div id="resultsList" class="space-y-3 max-h-96 overflow-y-auto">
+            <p class="text-center text-sm text-gray-400 py-4">Loading results...</p>
         </div>
     </div>
 </div>
@@ -172,6 +179,39 @@
     });
 
     window.deleteTest = async (id) => { if(confirm("Are you sure you want to delete this Test?")) await deleteDoc(doc(db, "tests", id)); };
+
+    // NAYA JS: DISPLAY ALL STUDENT RESULTS (Admin Panel)
+    const resultsQuery = query(collection(db, "results")); 
+    onSnapshot(resultsQuery, (snapshot) => {
+        const resultsList = document.getElementById('resultsList');
+        resultsList.innerHTML = "";
+        
+        if (snapshot.empty) {
+            return resultsList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No results submitted yet.</p>`;
+        }
+
+        // Sort locally by time to avoid Firebase index requirement
+        let resultsData = [];
+        snapshot.forEach((docSnap) => resultsData.push(docSnap.data()));
+        resultsData.sort((a, b) => b.timestamp - a.timestamp);
+
+        resultsData.forEach((data) => {
+            const percentage = (data.score / data.totalQuestions) * 100;
+            let badgeClass = percentage >= 40 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
+
+            resultsList.innerHTML += `
+                <div class="p-3 border border-gray-100 rounded-xl bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition">
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm capitalize">${data.studentName || "Unknown Student"}</h4>
+                        <p class="text-[11px] font-bold text-purple-600 mt-0.5">${data.testTitle}</p>
+                    </div>
+                    <div class="${badgeClass} px-3 py-1 rounded-lg text-sm font-bold shadow-sm border border-white">
+                        ${data.score} / ${data.totalQuestions}
+                    </div>
+                </div>
+            `;
+        });
+    });
 </script>
 </body>
 </html>
