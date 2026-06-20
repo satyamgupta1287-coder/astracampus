@@ -10,27 +10,32 @@
 <body class="bg-gray-50">
 
 <div class="max-w-md mx-auto bg-white min-h-screen p-4 shadow-sm">
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg mb-6">
-        <h1 class="text-xl font-bold">Admin Dashboard</h1>
-        <p class="text-blue-100 text-sm">Welcome back, Admin</p>
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold">Admin Dashboard</h1>
+            <p class="text-blue-100 text-sm">Welcome back</p>
+        </div>
+        <button id="logoutBtn" class="bg-white text-red-600 p-2 rounded-lg text-xs font-bold shadow hover:bg-red-50 transition">
+            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+        </button>
     </div>
 
     <h2 class="text-lg font-bold text-gray-800 mb-4 px-1">Quick Actions</h2>
     <div class="grid grid-cols-2 gap-4">
         <button onclick="window.location.href='manage-students.html'" class="bg-blue-50 p-4 rounded-2xl flex flex-col items-center hover:bg-blue-100 transition">
-            <i class="fas fa-users-cog text-blue-600 text-xl mb-2"></i>
+            <i class="fas fa-user-graduate text-blue-600 text-2xl mb-2"></i>
             <span class="text-xs font-bold text-gray-700">Manage Students</span>
         </button>
         <button onclick="window.location.href='manage-attendance.html'" class="bg-emerald-50 p-4 rounded-2xl flex flex-col items-center hover:bg-emerald-100 transition">
-            <i class="fas fa-check-circle text-emerald-600 text-xl mb-2"></i>
+            <i class="fas fa-check-circle text-emerald-600 text-2xl mb-2"></i>
             <span class="text-xs font-bold text-gray-700">Attendance</span>
         </button>
         <button onclick="window.location.href='create-assignment.html'" class="bg-purple-50 p-4 rounded-2xl flex flex-col items-center hover:bg-purple-100 transition">
-            <i class="fas fa-file-alt text-purple-600 text-xl mb-2"></i>
+            <i class="fas fa-book text-purple-600 text-2xl mb-2"></i>
             <span class="text-xs font-bold text-gray-700">Assignments</span>
         </button>
         <button onclick="window.location.href='add-results.html'" class="bg-orange-50 p-4 rounded-2xl flex flex-col items-center hover:bg-orange-100 transition">
-            <i class="fas fa-graduation-cap text-orange-600 text-xl mb-2"></i>
+            <i class="fas fa-trophy text-orange-600 text-2xl mb-2"></i>
             <span class="text-xs font-bold text-gray-700">Results</span>
         </button>
     </div>
@@ -38,8 +43,20 @@
 
 <script type="module">
     import { auth } from '../js/firebase-init.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-    onAuthStateChanged(auth, (user) => { if (!user) window.location.href = "../index.html"; });
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    
+    // Auth Check
+    onAuthStateChanged(auth, (user) => { 
+        if (!user) window.location.href = "../index.html"; 
+    });
+
+    // Logout Logic
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if(confirm("Are you sure you want to logout?")) {
+            await signOut(auth);
+            window.location.href = "../index.html";
+        }
+    });
 </script>
 </body>
 </html>
