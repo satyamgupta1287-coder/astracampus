@@ -5,46 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Attendance</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-gray-50 p-4 font-sans pb-24">
 
-<div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-6">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Mark Attendance</h2>
-    <input type="date" id="attDate" class="w-full p-3 border rounded-xl mb-6 outline-none">
+<div class="max-w-md mx-auto">
+    <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm mb-4">
+        <button onclick="window.location.href='admin.html'" class="text-gray-500 hover:text-blue-600 transition">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </button>
+        <h1 class="text-xl font-bold text-gray-800">Mark Attendance</h1>
+        <div></div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border-t-4 border-blue-600">
+        <h2 class="text-sm font-bold text-gray-400 uppercase mb-2"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Select Date</h2>
+        <input type="date" id="attDate" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 font-bold text-gray-700 focus:ring-2 focus:ring-blue-500">
+    </div>
     
-    <div id="attendanceStudentList" class="space-y-3">
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-sm font-bold text-gray-400 uppercase">Student List</h2>
+            <span class="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded" id="studentCount">0</span>
         </div>
+        <div id="attendanceStudentList" class="space-y-3">
+            <p class="text-center text-sm text-gray-400 py-4">Loading students...</p>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 z-50">
+        <button id="submitBtn" onclick="submitAttendance()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition text-lg flex justify-center items-center">
+            <i class="fas fa-check-circle mr-2"></i> Submit Attendance
+        </button>
+    </div>
 </div>
 
 <script type="module">
     import { db } from '../js/firebase-init.js';
-    import { collection, onSnapshot, query, where, addDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, onSnapshot, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-    // Set today's date
-    document.getElementById('attDate').valueAsDate = new Date();
+    let studentsList = [];
+    let attendanceData = {}; // Stores selections temporarily
 
+    // Set today's date & block future dates
+    const dateInput = document.getElementById('attDate');
+    const today = new Date().toISOString().split('T');
+    dateInput.value = today;
+    dateInput.max = today; 
+
+    // Fetch Students
     const q = query(collection(db, "users"), where("role", "==", "student"));
     onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('attendanceStudentList');
-        list.innerHTML = "";
+        studentsList = [];
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
+            studentsList.push({ id: docSnap.id, name: data.name || data.firstName || "Student", email: data.email });
+        });
+        document.getElementById('studentCount').innerText = studentsList.length + " Students";
+        renderStudents();
+    });
+
+    window.renderStudents = () => {
+        const list = document.getElementById('attendanceStudentList');
+        list.innerHTML = "";
+        
+        if(studentsList.length === 0) {
+            return list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No students found.</p>`;
+        }
+
+        studentsList.forEach((student) => {
+            const status = attendanceData[student.email]; // Track by email
+            
+            // Dynamic Button Styling Based on Selection
+            const btnPresent = status === 'present' ? 'bg-green-500 text-white shadow-inner' : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-100';
+            const btnAbsent = status === 'absent' ? 'bg-red-500 text-white shadow-inner' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100';
+
             list.innerHTML += `
-                <div class="flex justify-between items-center p-3 border rounded-xl">
-                    <span class="font-medium text-gray-700">${data.name || data.email}</span>
-                    <div class="flex gap-2">
-                        <button onclick="markAtt('${docSnap.id}', 'present')" class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm font-bold">P</button>
-                        <button onclick="markAtt('${docSnap.id}', 'absent')" class="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-bold">A</button>
+                <div class="flex flex-col p-3 border border-gray-100 rounded-xl bg-gray-50 shadow-sm transition-all duration-200 ${status ? 'border-blue-200 bg-blue-50/30' : ''}">
+                    <span class="font-bold text-gray-800 mb-2 capitalize text-sm">${student.name}</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectAtt('${student.email}', 'present')" class="${btnPresent} py-2 rounded-lg text-xs font-bold transition uppercase tracking-wider">
+                            <i class="fas fa-check mr-1"></i> Present
+                        </button>
+                        <button onclick="selectAtt('${student.email}', 'absent')" class="${btnAbsent} py-2 rounded-lg text-xs font-bold transition uppercase tracking-wider">
+                            <i class="fas fa-times mr-1"></i> Absent
+                        </button>
                     </div>
                 </div>
             `;
         });
-    });
+    };
 
-    window.markAtt = async (studentId, status) => {
-        const date = document.getElementById('attDate').value;
-        await addDoc(collection(db, "attendance"), { studentId, date, status });
-        alert(`Marked ${status.toUpperCase()} successfully!`);
+    window.selectAtt = (email, status) => {
+        attendanceData[email] = status;
+        renderStudents(); // Refresh UI to show selected colors
+    };
+
+    window.submitAttendance = async () => {
+        const date = dateInput.value;
+        
+        // Check if all students are marked
+        if (Object.keys(attendanceData).length < studentsList.length) {
+            return alert("⚠️ Please mark Present or Absent for ALL students before submitting.");
+        }
+
+        // Final Warning
+        const confirmed = confirm(`Are you sure you want to submit final attendance for ${date}?\n\nPlease verify your selection.`);
+        if (!confirmed) return;
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+        submitBtn.disabled = true;
+
+        try {
+            for (let student of studentsList) {
+                const status = attendanceData[student.email];
+                // Smart ID: Date + Email (Replaces '.' with '_' to avoid firebase error)
+                // This guarantees only ONE entry per student per day!
+                const safeEmail = student.email.replace(/\./g, '_');
+                const docId = `${date}_${safeEmail}`; 
+                
+                await setDoc(doc(db, "attendance", docId), {
+                    studentId: student.id,
+                    studentEmail: student.email, // Saved email explicitly
+                    studentName: student.name,
+                    date: date,
+                    status: status,
+                    timestamp: new Date()
+                });
+            }
+            alert("✅ Attendance Saved Successfully!");
+            attendanceData = {}; // Clear selections
+            renderStudents();
+        } catch (error) {
+            alert("Error saving attendance: " + error.message);
+        }
+
+        submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Submit Attendance';
+        submitBtn.disabled = false;
     };
 </script>
 </body>
