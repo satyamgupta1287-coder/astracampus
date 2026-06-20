@@ -71,7 +71,7 @@
 
     // 2. Database se Live Classes lana (Sirf currentClass ka)
     function fetchClasses() {
-        const q = query(collection(db, "live_classes"), where("targetClass", "==", currentClass), orderBy("createdAt", "desc"));
+        const q = query(collection(db, "live_classes"), where("targetClass", "==", currentClass));
 
         onSnapshot(q, (snapshot) => {
             const container = document.getElementById('classesContainer');
@@ -87,8 +87,15 @@
                 return;
             }
 
+            // Client-side sort (latest first) since orderBy isn't used in the query
+            const docs = snapshot.docs.slice().sort((a, b) => {
+                const aTime = a.data().createdAt?.toMillis ? a.data().createdAt.toMillis() : 0;
+                const bTime = b.data().createdAt?.toMillis ? b.data().createdAt.toMillis() : 0;
+                return bTime - aTime;
+            });
+
             container.innerHTML = "";
-            snapshot.forEach((docSnap) => {
+            docs.forEach((docSnap) => {
                 const data = docSnap.data();
                 container.innerHTML += `
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 flex items-center gap-4 text-left">
@@ -106,6 +113,12 @@
                     </div>
                 `;
             });
+        }, (error) => {
+            document.getElementById('classesContainer').innerHTML = `
+                <div class="bg-red-50 p-4 rounded-2xl border border-red-200 text-center mt-4">
+                    <p class="text-sm text-red-600 font-bold">Error loading classes</p>
+                    <p class="text-xs text-gray-500 mt-1 break-words">${error.message}</p>
+                </div>`;
         });
     }
 </script>
