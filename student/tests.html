@@ -35,6 +35,13 @@
                 <p class="text-sm text-gray-500">Finding your tests...</p>
             </div>
         </div>
+
+        <div class="px-4 mt-8" id="pastResultsSection">
+            <h2 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-history text-purple-500 mr-2"></i>My Past Results</h2>
+            <div id="myResultsContainer" class="space-y-3 pb-8">
+                <p class="text-center text-xs text-gray-500 py-4">Loading past results...</p>
+            </div>
+        </div>
     </div>
 
     <div id="activeExamView" class="hidden bg-gray-50 min-h-screen pb-24">
@@ -77,8 +84,8 @@
             <p class="text-xs font-bold text-gray-500" id="percentageDisplay">0% Accuracy</p>
         </div>
 
-        <button onclick="window.location.href='dashboard.html'" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl hover:bg-gray-900 transition">
-            Back to Dashboard
+        <button onclick="window.location.reload()" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl hover:bg-gray-900 transition">
+            Back to Tests Menu
         </button>
     </div>
 
@@ -105,6 +112,7 @@
                 studentData = userDoc.data();
                 if(studentData.class) {
                     fetchTests(studentData.class);
+                    fetchMyResults(user.uid); // NAYI LINE: Student ke scores fetch karne ke liye
                 } else {
                     document.getElementById('availableTestsContainer').innerHTML = `<p class="text-center text-red-500">Class not assigned.</p>`;
                 }
@@ -138,6 +146,38 @@
                         <button onclick="startExam('${test.id}')" class="w-full bg-purple-50 text-purple-600 font-bold py-2.5 rounded-xl border border-purple-200 hover:bg-purple-100 transition">
                             Start Test Now
                         </button>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    // NAYA JS: Fetch Student's Own Results
+    function fetchMyResults(uid) {
+        const resultsQuery = query(collection(db, "results"), where("studentId", "==", uid));
+        onSnapshot(resultsQuery, (snapshot) => {
+            const container = document.getElementById('myResultsContainer');
+            container.innerHTML = "";
+            
+            if(snapshot.empty) {
+                container.innerHTML = `<div class="bg-white p-4 rounded-xl text-center"><p class="text-xs text-gray-500">You haven't taken any tests yet.</p></div>`;
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const percentage = (data.score / data.totalQuestions) * 100;
+                let colorClass = percentage >= 40 ? "text-green-700 bg-green-100 border-green-200" : "text-red-700 bg-red-100 border-red-200";
+
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-sm">${data.testTitle}</h4>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Attempted Questions</p>
+                        </div>
+                        <div class="${colorClass} border px-3 py-1.5 rounded-lg text-sm font-bold">
+                            Score: ${data.score} / ${data.totalQuestions}
+                        </div>
                     </div>
                 `;
             });
@@ -234,7 +274,7 @@
         try {
             await addDoc(collection(db, "results"), {
                 studentId: currentUser.uid,
-                studentName: studentData.name || studentData.firstName,
+                studentName: studentData.name || studentData.firstName || "Student",
                 testId: currentActiveTest.id,
                 testTitle: currentActiveTest.title,
                 score: score,
@@ -245,6 +285,8 @@
             showResultScreen(score, total);
         } catch (err) {
             alert("Error saving result: " + err.message);
+            document.getElementById('submitTestBtn').disabled = false;
+            document.getElementById('submitTestBtn').innerText = "Submit Test";
         }
     };
 
@@ -266,4 +308,4 @@
     }
 </script>
 </body>
-    </html>
+</html>
