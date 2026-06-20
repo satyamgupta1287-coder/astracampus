@@ -65,8 +65,9 @@
     const formSubtitle = document.getElementById('formSubtitle');
 
     let isLoginMode = true;
+    let isProcessingAction = false;
 
-    // Toggle Login/Signup Mode
+    // Toggle Mode
     toggleModeBtn.addEventListener('click', () => {
         isLoginMode = !isLoginMode;
         if (isLoginMode) {
@@ -82,16 +83,17 @@
         }
     });
 
-    // Check Auto-Login
+    // Auto-Login Check
     onAuthStateChanged(auth, async (user) => {
-        if (user) {
+        if (user && !isProcessingAction) {
             submitBtn.innerHTML = 'Redirecting...';
             checkRoleAndRedirect(user);
         }
     });
 
-    // Handle Email/Password Login & Signup
+    // Email/Password Sign In / Sign Up
     authForm.addEventListener('submit', async () => {
+        isProcessingAction = true;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
@@ -103,63 +105,55 @@
             let userCredential;
             if (isLoginMode) {
                 userCredential = await signInWithEmailAndPassword(auth, email, password);
+                await checkRoleAndRedirect(userCredential.user);
             } else {
                 userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                // Naya user banne par usko default "student" role de do
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     email: email,
                     role: "student",
                     createdAt: serverTimestamp()
                 });
+                await checkRoleAndRedirect(userCredential.user);
             }
-            await checkRoleAndRedirect(userCredential.user);
         } catch (error) {
             showError(error.message);
         }
     });
 
-    // Handle Google Login
+    // Google Sign In
     googleBtn.addEventListener('click', async () => {
+        isProcessingAction = true;
         const provider = new GoogleAuthProvider();
         try {
             const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            
-            // Check agar Google user pehle se database me hai ya nahi
-            const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
-            
-            if (!docSnap.exists()) {
-                // Agar naya Google user hai, toh student ka role de do
-                await setDoc(docRef, {
-                    name: user.displayName,
-                    email: user.email,
-                    role: "student",
-                    createdAt: serverTimestamp()
-                });
-            }
-            await checkRoleAndRedirect(user);
+            await checkRoleAndRedirect(result.user);
         } catch (error) {
             showError(error.message);
         }
     });
 
-    // Check Role and Redirect Function
+    // Smart Redirect Function (Database record missing hone par automatic bana dega)
     async function checkRoleAndRedirect(user) {
         try {
             const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
+            let docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
-                const userData = docSnap.data();
-                if (userData.role === "admin") {
-                    window.location.href = "admin/admin.html";
-                } else {
-                    window.location.href = "student/dashboard.html";
-                }
+            // AGAR DATABASE EMPTY HAI YA RECORD DELETE HO GAYA HAI, TO APNE AAP RECREATE KARO
+            if (!docSnap.exists()) {
+                await setDoc(docRef, {
+                    name: user.displayName || "Student",
+                    email: user.email,
+                    role: "student", // Pehle default student banega
+                    createdAt: serverTimestamp()
+                });
+                docSnap = await getDoc(docRef); // Refresh data
+            }
+
+            const userData = docSnap.data();
+            if (userData.role === "admin") {
+                window.location.href = "admin/admin.html";
             } else {
-                showError("User record setup incomplete. Try logging in again.");
-                auth.signOut();
+                window.location.href = "student/dashboard.html";
             }
         } catch (err) {
             showError(err.message);
@@ -171,6 +165,7 @@
         errorMsg.classList.remove('hidden');
         submitBtn.innerHTML = isLoginMode ? 'Sign In' : 'Sign Up';
         submitBtn.disabled = false;
+        isProcessingAction = false;
     }
 </script>
 </body>
