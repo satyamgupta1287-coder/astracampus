@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Portal Login</title>
+    <title>School Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
 
 <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
-    <div class="text-center mb-8">
+    <div class="text-center mb-6">
         <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4 shadow-md">
             <i class="fas fa-graduation-cap"></i>
         </div>
-        <h1 class="text-2xl font-bold text-gray-800">Welcome Back</h1>
-        <p class="text-sm text-gray-500 mt-1">Please enter your details to sign in</p>
+        <h1 class="text-2xl font-bold text-gray-800" id="formTitle">Welcome Back</h1>
+        <p class="text-sm text-gray-500 mt-1" id="formSubtitle">Please enter your details to sign in</p>
     </div>
     
-    <form id="loginForm" class="space-y-5" onsubmit="return false;">
+    <form id="authForm" class="space-y-4" onsubmit="return false;">
         <div>
             <label class="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
-            <input type="email" id="email" required placeholder="admin@school.com" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
+            <input type="email" id="email" required placeholder="name@school.com" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition">
         </div>
         
         <div>
@@ -30,79 +31,146 @@
 
         <p id="errorMsg" class="text-red-500 text-sm hidden font-bold text-center bg-red-50 p-2 rounded-lg border border-red-100"></p>
 
-        <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition flex justify-center items-center">
+        <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition">
             Sign In
         </button>
     </form>
-</div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <div class="mt-4 text-center">
+        <button id="toggleModeBtn" class="text-sm font-bold text-blue-600 hover:underline">Don't have an account? Create one</button>
+    </div>
+
+    <div class="relative flex items-center justify-center w-full mt-6 mb-6">
+        <div class="absolute w-full border-t border-gray-200"></div>
+        <span class="bg-white px-3 text-xs text-gray-400 font-bold uppercase relative z-10">OR</span>
+    </div>
+
+    <button id="googleBtn" class="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 shadow-sm transition flex justify-center items-center gap-3">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+        Continue with Google
+    </button>
+</div>
 
 <script type="module">
     import { auth, db } from './js/firebase-init.js';
-    import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-    const loginForm = document.getElementById('loginForm');
-    const loginBtn = document.getElementById('loginBtn');
+    const authForm = document.getElementById('authForm');
+    const submitBtn = document.getElementById('submitBtn');
     const errorMsg = document.getElementById('errorMsg');
+    const toggleModeBtn = document.getElementById('toggleModeBtn');
+    const googleBtn = document.getElementById('googleBtn');
+    const formTitle = document.getElementById('formTitle');
+    const formSubtitle = document.getElementById('formSubtitle');
 
-    // 1. Agar user pehle se login hai, toh seedha andar bhej do
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            loginBtn.innerHTML = 'Redirecting...';
-            checkRoleAndRedirect(user.uid);
+    let isLoginMode = true;
+
+    // Toggle Login/Signup Mode
+    toggleModeBtn.addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        if (isLoginMode) {
+            formTitle.innerText = "Welcome Back";
+            formSubtitle.innerText = "Please enter your details to sign in";
+            submitBtn.innerText = "Sign In";
+            toggleModeBtn.innerText = "Don't have an account? Create one";
+        } else {
+            formTitle.innerText = "Create Account";
+            formSubtitle.innerText = "Sign up to access the portal";
+            submitBtn.innerText = "Sign Up";
+            toggleModeBtn.innerText = "Already have an account? Sign In";
         }
     });
 
-    // 2. Naya Login submit hone par
-    loginForm.addEventListener('submit', async () => {
+    // Check Auto-Login
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            submitBtn.innerHTML = 'Redirecting...';
+            checkRoleAndRedirect(user);
+        }
+    });
+
+    // Handle Email/Password Login & Signup
+    authForm.addEventListener('submit', async () => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
-        loginBtn.innerHTML = 'Signing in...';
-        loginBtn.disabled = true;
+        submitBtn.innerHTML = 'Processing...';
+        submitBtn.disabled = true;
         errorMsg.classList.add('hidden');
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            await checkRoleAndRedirect(userCredential.user.uid);
+            let userCredential;
+            if (isLoginMode) {
+                userCredential = await signInWithEmailAndPassword(auth, email, password);
+            } else {
+                userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                // Naya user banne par usko default "student" role de do
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    email: email,
+                    role: "student",
+                    createdAt: serverTimestamp()
+                });
+            }
+            await checkRoleAndRedirect(userCredential.user);
         } catch (error) {
-            errorMsg.innerText = error.message.replace("Firebase: ", "");
-            errorMsg.classList.remove('hidden');
-            loginBtn.innerHTML = 'Sign In';
-            loginBtn.disabled = false;
+            showError(error.message);
         }
     });
 
-    // 3. User ka Role check karne ka function
-    async function checkRoleAndRedirect(uid) {
+    // Handle Google Login
+    googleBtn.addEventListener('click', async () => {
+        const provider = new GoogleAuthProvider();
         try {
-            const docRef = doc(db, "users", uid);
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+            
+            // Check agar Google user pehle se database me hai ya nahi
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
+            
+            if (!docSnap.exists()) {
+                // Agar naya Google user hai, toh student ka role de do
+                await setDoc(docRef, {
+                    name: user.displayName,
+                    email: user.email,
+                    role: "student",
+                    createdAt: serverTimestamp()
+                });
+            }
+            await checkRoleAndRedirect(user);
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    // Check Role and Redirect Function
+    async function checkRoleAndRedirect(user) {
+        try {
+            const docRef = doc(db, "users", user.uid);
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
                 const userData = docSnap.data();
                 if (userData.role === "admin") {
-                    window.location.href = "admin/admin.html"; // Admin Dashboard
-                } else if (userData.role === "student") {
-                    window.location.href = "student/dashboard.html"; // Student Dashboard
+                    window.location.href = "admin/admin.html";
                 } else {
-                    throw new Error("Account is not active or role missing.");
+                    window.location.href = "student/dashboard.html";
                 }
             } else {
-                errorMsg.innerText = "Error: Database me user record nahi mila!";
-                errorMsg.classList.remove('hidden');
-                loginBtn.innerHTML = 'Sign In';
-                loginBtn.disabled = false;
+                showError("User record setup incomplete. Try logging in again.");
                 auth.signOut();
             }
         } catch (err) {
-            errorMsg.innerText = err.message;
-            errorMsg.classList.remove('hidden');
-            loginBtn.innerHTML = 'Sign In';
-            loginBtn.disabled = false;
+            showError(err.message);
         }
+    }
+
+    function showError(msg) {
+        errorMsg.innerText = msg.replace("Firebase: ", "");
+        errorMsg.classList.remove('hidden');
+        submitBtn.innerHTML = isLoginMode ? 'Sign In' : 'Sign Up';
+        submitBtn.disabled = false;
     }
 </script>
 </body>
