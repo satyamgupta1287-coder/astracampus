@@ -5,76 +5,279 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Students</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-gray-100 p-2 md:p-4 font-sans">
 
-<div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-6 mb-6">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Add New Student</h2>
-    <div class="space-y-4">
-        <input type="email" id="studentEmail" placeholder="Student Email" class="w-full p-3 border rounded-xl outline-none bg-gray-50">
-        <input type="text" id="studentName" placeholder="Full Name" class="w-full p-3 border rounded-xl outline-none bg-gray-50">
-        <div class="grid grid-cols-2 gap-4">
-            <input type="text" id="studentClass" placeholder="Class (e.g. 10)" class="w-full p-3 border rounded-xl outline-none bg-gray-50">
-            <input type="text" id="studentSection" placeholder="Section" class="w-full p-3 border rounded-xl outline-none bg-gray-50">
-        </div>
-        <button id="addStudentBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700">Add Student</button>
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm mb-4">
+        <button onclick="window.location.href='admin.html'" class="text-gray-500 hover:text-blue-600"><i class="fas fa-arrow-left text-xl"></i></button>
+        <h1 class="text-xl font-bold text-gray-800">Student Database</h1>
+        <button onclick="resetForm()" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-sm font-bold border border-blue-200">+ New</button>
     </div>
-</div>
 
-<div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-6">
-    <h2 class="text-lg font-bold text-gray-800 mb-4">All Students (<span id="stuCount">0</span>)</h2>
-    <div id="studentsList" class="space-y-3 max-h-96 overflow-y-auto">
-        <p class="text-gray-400 text-sm">Loading students...</p>
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6">
+        <h2 class="text-lg font-bold text-blue-600 mb-4 border-b pb-2" id="formModeTitle">Add New Student</h2>
+        
+        <form id="studentForm" class="space-y-6" onsubmit="return false;">
+            <input type="hidden" id="editDocId"> <div>
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">1. Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" id="firstName" placeholder="First Name *" required class="p-2 border rounded-lg bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500">
+                    <input type="text" id="middleName" placeholder="Middle Name" class="p-2 border rounded-lg bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500">
+                    <input type="text" id="lastName" placeholder="Last Name *" required class="p-2 border rounded-lg bg-gray-50 outline-none focus:ring-1 focus:ring-blue-500">
+                    
+                    <input type="text" id="fullName" placeholder="Full Name (Auto-fill)" readonly class="p-2 border rounded-lg bg-blue-50 text-blue-700 font-medium font-bold outline-none md:col-span-3">
+                    
+                    <input type="date" id="dob" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <select id="gender" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                        <option value="">Gender</option><option value="Male">Male</option><option value="Female">Female</option>
+                    </select>
+                    <select id="bloodGroup" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                        <option value="">Blood Group</option><option value="A+">A+</option><option value="B+">B+</option><option value="O+">O+</option><option value="AB+">AB+</option><option value="A-">A-</option><option value="B-">B-</option><option value="O-">O-</option><option value="AB-">AB-</option>
+                    </select>
+                    <input type="text" id="nationality" placeholder="Nationality" value="Indian" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="category" placeholder="Category/Caste" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="religion" placeholder="Religion" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    
+                    <div class="md:col-span-3">
+                        <label class="text-xs text-gray-500">Profile Photo (Max 500kb)</label>
+                        <input type="file" id="photoInput" accept="image/*" class="w-full text-sm mt-1">
+                        <input type="hidden" id="photoBase64">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">2. Contact Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="tel" id="mobile" placeholder="Mobile Number *" required class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="tel" id="altMobile" placeholder="Alt Mobile Number" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="email" id="email" placeholder="Email Address *" required class="p-2 border rounded-lg bg-gray-50 outline-none md:col-span-2">
+                    <textarea id="currentAddress" placeholder="Current Address" class="p-2 border rounded-lg bg-gray-50 outline-none h-16 md:col-span-2"></textarea>
+                    <textarea id="permanentAddress" placeholder="Permanent Address" class="p-2 border rounded-lg bg-gray-50 outline-none h-16 md:col-span-2"></textarea>
+                    <input type="text" id="city" placeholder="City" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="state" placeholder="State/Province" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="pincode" placeholder="Postal Code" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="country" placeholder="Country" value="India" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">3. Academic Information</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" id="admissionDate" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="session" placeholder="Session (e.g. 2026-27)" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="studentClass" placeholder="Class *" required class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="section" placeholder="Section" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="rollNo" placeholder="Roll Number" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="tcNo" placeholder="TC Number" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="prevSchool" placeholder="Previous School" class="p-2 border rounded-lg bg-gray-50 outline-none col-span-2">
+                    <input type="text" id="prevBoard" placeholder="Previous Board" class="p-2 border rounded-lg bg-gray-50 outline-none col-span-2">
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">4. Guardian Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" id="guardianName" placeholder="Guardian Full Name" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="relation" placeholder="Relationship (e.g. Father)" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="tel" id="guardianMobile" placeholder="Guardian Mobile" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                    <input type="text" id="occupation" placeholder="Occupation" class="p-2 border rounded-lg bg-gray-50 outline-none">
+                </div>
+            </div>
+
+            <button id="saveBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-md">
+                Save Student Record
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Registered Students (<span id="stuCount">0</span>)</h2>
+        <div id="studentsList" class="space-y-3 max-h-96 overflow-y-auto">
+            <p class="text-gray-400 text-sm text-center py-4">Loading students...</p>
+        </div>
     </div>
 </div>
 
 <script type="module">
     import { db } from '../js/firebase-init.js';
-    import { collection, addDoc, onSnapshot, query, where, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, addDoc, updateDoc, onSnapshot, query, where, deleteDoc, doc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-    // 1. Add Student Logic
-    document.getElementById('addStudentBtn').addEventListener('click', async () => {
-        const email = document.getElementById('studentEmail').value;
-        const name = document.getElementById('studentName').value;
-        const cls = document.getElementById('studentClass').value;
-        const sec = document.getElementById('studentSection').value;
-        
-        if(!email || !name) return alert("Email aur Name zaroori hai!");
-        
-        await addDoc(collection(db, "users"), {
-            email: email, name: name, class: cls, section: sec, role: "student", createdAt: serverTimestamp()
-        });
-        alert("Student Added!");
-        document.getElementById('studentEmail').value = '';
-        document.getElementById('studentName').value = '';
+    let allStudentsData = {}; // Edit karne ke liye local cache
+
+    // --- Auto Fill Full Name Logic ---
+    const updateFullName = () => {
+        const f = document.getElementById('firstName').value.trim();
+        const m = document.getElementById('middleName').value.trim();
+        const l = document.getElementById('lastName').value.trim();
+        document.getElementById('fullName').value = `${f} ${m} ${l}`.replace(/\s+/g, ' ').trim();
+    };
+    document.getElementById('firstName').addEventListener('input', updateFullName);
+    document.getElementById('middleName').addEventListener('input', updateFullName);
+    document.getElementById('lastName').addEventListener('input', updateFullName);
+
+    // --- Photo Image to Base64 Reader ---
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => document.getElementById('photoBase64').value = e.target.result;
+            reader.readAsDataURL(file);
+        }
     });
 
-    // 2. Fetch and Show Students Logic
+    // --- Reset Form (Switch to Add Mode) ---
+    window.resetForm = () => {
+        document.getElementById('studentForm').reset();
+        document.getElementById('editDocId').value = "";
+        document.getElementById('photoBase64').value = "";
+        document.getElementById('formModeTitle').innerText = "Add New Student";
+        document.getElementById('saveBtn').innerText = "Save Student Record";
+        document.getElementById('saveBtn').classList.replace('bg-green-600', 'bg-blue-600');
+        window.scrollTo(0, 0);
+    };
+
+    // --- Save / Update Student ---
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+        // Collect Data
+        const formData = {
+            role: "student",
+            name: document.getElementById('fullName').value, // Used for quick display
+            firstName: document.getElementById('firstName').value,
+            middleName: document.getElementById('middleName').value,
+            lastName: document.getElementById('lastName').value,
+            dob: document.getElementById('dob').value,
+            gender: document.getElementById('gender').value,
+            bloodGroup: document.getElementById('bloodGroup').value,
+            nationality: document.getElementById('nationality').value,
+            category: document.getElementById('category').value,
+            religion: document.getElementById('religion').value,
+            photoBase64: document.getElementById('photoBase64').value,
+            
+            mobile: document.getElementById('mobile').value,
+            altMobile: document.getElementById('altMobile').value,
+            email: document.getElementById('email').value,
+            currentAddress: document.getElementById('currentAddress').value,
+            permanentAddress: document.getElementById('permanentAddress').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            pincode: document.getElementById('pincode').value,
+            country: document.getElementById('country').value,
+            
+            admissionDate: document.getElementById('admissionDate').value,
+            session: document.getElementById('session').value,
+            class: document.getElementById('studentClass').value,
+            section: document.getElementById('section').value,
+            rollNo: document.getElementById('rollNo').value,
+            tcNo: document.getElementById('tcNo').value,
+            prevSchool: document.getElementById('prevSchool').value,
+            prevBoard: document.getElementById('prevBoard').value,
+            
+            guardianName: document.getElementById('guardianName').value,
+            relation: document.getElementById('relation').value,
+            guardianMobile: document.getElementById('guardianMobile').value,
+            occupation: document.getElementById('occupation').value,
+            
+            updatedAt: serverTimestamp()
+        };
+
+        if(!formData.firstName || !formData.lastName || !formData.email || !formData.class || !formData.mobile) {
+            return alert("First Name, Last Name, Email, Mobile and Class are required fields!");
+        }
+
+        const editId = document.getElementById('editDocId').value;
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        try {
+            if(editId) {
+                // UPDATE Mode
+                await updateDoc(doc(db, "users", editId), formData);
+                alert("Student Record Updated!");
+            } else {
+                // ADD Mode - Generate Auto IDs
+                formData.createdAt = serverTimestamp();
+                formData.admissionNo = "ADM" + Date.now().toString().slice(-6);
+                formData.studentId = "STU" + Math.floor(1000 + Math.random() * 9000);
+                
+                await addDoc(collection(db, "users"), formData);
+                alert("New Student Registered Successfully!\nAdmission No: " + formData.admissionNo);
+            }
+            resetForm();
+        } catch(error) {
+            alert("Error: " + error.message);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // --- Load Students List ---
     const q = query(collection(db, "users"), where("role", "==", "student"));
     onSnapshot(q, (snapshot) => {
         const list = document.getElementById('studentsList');
         document.getElementById('stuCount').innerText = snapshot.size;
         list.innerHTML = "";
+        allStudentsData = {}; // Clear cache
         
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
+            allStudentsData[docSnap.id] = data; // Save to local cache for editing
+            
             list.innerHTML += `
-                <div class="flex justify-between items-center p-3 border rounded-xl bg-gray-50">
-                    <div>
-                        <p class="font-bold text-gray-800 text-sm">${data.name || "No Name"} <span class="text-xs text-blue-600 bg-blue-100 px-2 rounded-full">Class ${data.class || 'N/A'}</span></p>
-                        <p class="text-xs text-gray-500">${data.email}</p>
+                <div class="flex flex-col md:flex-row justify-between md:items-center p-3 border rounded-xl bg-gray-50 hover:bg-gray-100 transition">
+                    <div class="mb-2 md:mb-0">
+                        <p class="font-bold text-gray-800 text-sm">
+                            ${data.name || "No Name"} 
+                            <span class="text-xs text-blue-600 bg-blue-100 px-2 rounded-full ml-1">Cls ${data.class || '-'} ${data.section || ''}</span>
+                        </p>
+                        <p class="text-xs text-gray-500">ID: ${data.studentId || 'N/A'} | ADM: ${data.admissionNo || 'N/A'}</p>
+                        <p class="text-xs text-gray-500"><i class="fas fa-envelope mr-1"></i>${data.email} <i class="fas fa-phone ml-2 mr-1"></i>${data.mobile || '-'}</p>
                     </div>
-                    <button onclick="deleteStudent('${docSnap.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition">
-                        Delete
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="editStudent('${docSnap.id}')" class="text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fas fa-pen"></i> Edit
+                        </button>
+                        <button onclick="deleteStudent('${docSnap.id}')" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             `;
         });
+        if(snapshot.size === 0) list.innerHTML = "<p class='text-center text-gray-500 text-sm py-4'>No students found.</p>";
     });
 
-    // 3. Delete Student Logic (Global function banaya)
+    // --- Edit Student ---
+    window.editStudent = (id) => {
+        const data = allStudentsData[id];
+        if(!data) return alert("Error loading student data.");
+
+        document.getElementById('editDocId').value = id;
+        document.getElementById('formModeTitle').innerText = "Edit Student: " + (data.admissionNo || '');
+        
+        // Populate inputs manually mapping keys to HTML IDs
+        const ids = ['firstName', 'middleName', 'lastName', 'fullName', 'dob', 'gender', 'bloodGroup', 'nationality', 'category', 'religion', 'photoBase64', 'mobile', 'altMobile', 'email', 'currentAddress', 'permanentAddress', 'city', 'state', 'pincode', 'country', 'admissionDate', 'session', 'studentClass', 'section', 'rollNo', 'tcNo', 'prevSchool', 'prevBoard', 'guardianName', 'relation', 'guardianMobile', 'occupation'];
+        
+        ids.forEach(htmlId => {
+            let val = data[htmlId === 'studentClass' ? 'class' : htmlId]; // handle 'class' keyword mapping
+            if(document.getElementById(htmlId)) document.getElementById(htmlId).value = val || '';
+        });
+
+        // Update Button
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "Update Student Record";
+        btn.classList.replace('bg-blue-600', 'bg-green-600');
+        
+        // Scroll Up
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // --- Delete Student ---
     window.deleteStudent = async (id) => {
-        if(confirm("Kya aap sach me is student ko delete karna chahte hain?")) {
+        if(confirm("DANGER: Are you sure you want to permanently delete this student record? This cannot be undone.")) {
             await deleteDoc(doc(db, "users", id));
         }
     };
