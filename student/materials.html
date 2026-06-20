@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Materials</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 pb-6 font-sans">
+
+<div class="max-w-md mx-auto min-h-screen bg-gray-50">
+    
+    <div class="bg-blue-600 text-white p-4 rounded-b-3xl shadow-md sticky top-0 z-50">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="window.location.href='dashboard.html'" class="hover:bg-white/20 p-2 rounded-xl transition">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="text-lg font-bold">Study Materials</h1>
+            <div class="w-8"></div> </div>
+        
+        <div class="relative">
+            <i class="fas fa-search absolute left-4 top-3 text-gray-400"></i>
+            <input type="text" placeholder="Search subject or title..." class="w-full bg-white text-gray-800 py-2.5 pl-10 pr-4 rounded-xl text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-300">
+        </div>
+    </div>
+
+    <div class="px-4 mt-4">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar py-1" id="tabContainer">
+            <button onclick="switchTab('book')" id="tab-book" class="tab-btn bg-blue-600 text-white px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-md transition">Books</button>
+            <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn bg-white text-gray-600 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-200 transition">Notes</button>
+            <button onclick="switchTab('pyq')" id="tab-pyq" class="tab-btn bg-white text-gray-600 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-200 transition">Prev. Year (PYQ)</button>
+            <button onclick="switchTab('model')" id="tab-model" class="tab-btn bg-white text-gray-600 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-200 transition">Model Papers</button>
+        </div>
+    </div>
+
+    <div class="px-4 mt-4 flex justify-between items-center">
+        <p class="text-xs text-gray-500 font-bold uppercase">Showing resources for:</p>
+        <span id="displayClass" class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">Class ...</span>
+    </div>
+
+    <div class="px-4 mt-3" id="materialsContainer">
+        <div class="text-center py-10">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i>
+            <p class="text-sm text-gray-500">Loading materials...</p>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    let currentClass = "";
+    let currentTab = "book"; // Default tab
+    let allMaterials = []; // Database se aaya saara data yahan store hoga
+
+    // 1. Auth aur Class Check karein
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentClass = userDoc.data().class;
+                
+                if(!currentClass) {
+                    document.getElementById('materialsContainer').innerHTML = `
+                        <div class="bg-red-50 p-4 rounded-2xl border border-red-100 text-center mt-4">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-2xl mb-2"></i>
+                            <p class="text-sm text-red-600 font-bold">Class not assigned!</p>
+                            <p class="text-xs text-gray-500 mt-1">Please ask admin to update your class profile.</p>
+                        </div>`;
+                    return;
+                }
+
+                document.getElementById('displayClass').innerText = `Class ${currentClass}`;
+                fetchMaterials(); // Data laao
+            } else {
+                window.location.href = "../index.html";
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
+
+    // 2. Database se Material lana (Sirf currentClass ka)
+    function fetchMaterials() {
+        const q = query(collection(db, "study_materials"), where("targetClass", "==", currentClass));
+        
+        onSnapshot(q, (snapshot) => {
+            allMaterials = [];
+            snapshot.forEach((doc) => {
+                allMaterials.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Latest pehle dikhane ke liye JS mein sort kar diya
+            allMaterials.sort((a, b) => b.createdAt - a.createdAt); 
+            
+            renderMaterials(); // UI par dikhao
+        });
+    }
+
+    // 3. Tab Switch logic aur UI update
+    window.switchTab = (tabName) => {
+        currentTab = tabName;
+        
+        // Button Colors change karna
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            btn.classList.add('bg-white', 'text-gray-600');
+        });
+        
+        const activeBtn = document.getElementById(`tab-${tabName}`);
+        activeBtn.classList.remove('bg-white', 'text-gray-600');
+        activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+
+        renderMaterials();
+    };
+
+    // 4. Data ko screen par lagana (Current Tab ke hisaab se)
+    function renderMaterials() {
+        const container = document.getElementById('materialsContainer');
+        container.innerHTML = "";
+
+        // Filter by currentTab (book, notes, pyq, model)
+        const filteredMaterials = allMaterials.filter(item => item.type === currentTab);
+
+        if (filteredMaterials.length === 0) {
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 text-center mt-4">
+                    <i class="fas fa-folder-open text-gray-300 text-4xl mb-3"></i>
+                    <p class="text-sm font-bold text-gray-600">No ${currentTab}s found.</p>
+                    <p class="text-xs text-gray-400 mt-1">Admin has not uploaded any ${currentTab} for Class ${currentClass} yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        filteredMaterials.forEach(data => {
+            let iconClass = "fa-book";
+            if(data.type === 'pyq') iconClass = "fa-history";
+            if(data.type === 'notes') iconClass = "fa-file-signature";
+
+            container.innerHTML += `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 flex gap-4 items-center">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas ${iconClass} text-xl"></i>
+                    </div>
+                    
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-gray-800 text-sm line-clamp-1">${data.title}</h4>
+                        <p class="text-xs text-gray-500 mt-0.5">${data.subject} ${data.year !== 'N/A' ? `• ${data.year}` : ''}</p>
+                    </div>
+                    
+                    <a href="${data.fileUrl}" target="_blank" class="w-10 h-10 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 rounded-full flex items-center justify-center text-gray-600 transition flex-shrink-0">
+                        <i class="fas fa-download text-sm"></i>
+                    </a>
+                </div>
+            `;
+        });
+    }
+</script>
+</body>
+</html>

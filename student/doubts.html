@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Doubts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 pb-20 font-sans min-h-screen">
+
+<div class="max-w-md mx-auto">
+    
+    <div class="bg-blue-600 text-white p-4 rounded-b-3xl shadow-md sticky top-0 z-50">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="window.location.href='dashboard.html'" class="hover:bg-white/20 p-2 rounded-xl transition">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="text-lg font-bold">Ask Doubts</h1>
+            <div class="w-8"></div>
+        </div>
+        <p class="text-xs text-blue-200 text-center pb-2">Ask your teachers anything!</p>
+    </div>
+
+    <div class="px-4 mt-6">
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 mb-6">
+            <h2 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-question-circle text-blue-500 mr-2"></i>New Doubt</h2>
+            <form id="doubtForm" class="space-y-3" onsubmit="return false;">
+                
+                <div>
+                    <input type="text" id="subject" required placeholder="Subject (e.g., Math, Science)" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+
+                <div>
+                    <textarea id="question" required placeholder="Type your full question or doubt here..." class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 h-24 focus:ring-2 focus:ring-blue-500 text-sm resize-none"></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-md transition text-sm flex justify-center items-center">
+                    <i class="fas fa-paper-plane mr-2"></i> Send to Teacher
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="px-4">
+        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">My Previous Doubts</h2>
+        <div id="doubtsList" class="space-y-3">
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-2"></i>
+                <p class="text-sm text-gray-500">Loading your doubts...</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { doc, getDoc, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    let currentUser = null;
+    let studentData = null;
+
+    // 1. Check Auth & Load Profile
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                studentData = userDoc.data();
+                loadMyDoubts(user.uid);
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
+
+    // 2. Submit Doubt Logic
+    const form = document.getElementById('doubtForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async () => {
+        const subject = document.getElementById('subject').value;
+        const question = document.getElementById('question').value;
+
+        if(!studentData || !studentData.class) {
+            return alert("Your class profile is not updated. Cannot send doubt.");
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+
+        try {
+            await addDoc(collection(db, "doubts"), {
+                studentId: currentUser.uid,
+                studentName: studentData.name || studentData.firstName,
+                targetClass: studentData.class,
+                subject: subject,
+                question: question,
+                reply: "", // Admin will fill this later
+                status: "Pending", // Pending or Resolved
+                createdAt: serverTimestamp()
+            });
+
+            alert("Doubt sent successfully! Your teacher will reply soon.");
+            form.reset();
+        } catch (error) {
+            alert("Error sending doubt: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Send to Teacher';
+        }
+    });
+
+    // 3. Load My Doubts Logic
+    function loadMyDoubts(uid) {
+        const q = query(collection(db, "doubts"), where("studentId", "==", uid), orderBy("createdAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('doubtsList');
+            list.innerHTML = "";
+
+            if(snapshot.empty) {
+                list.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 text-center">
+                        <i class="far fa-comments text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-sm font-bold text-gray-600">No doubts asked yet.</p>
+                        <p class="text-xs text-gray-400 mt-1">If you have any questions, use the form above.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'Just now';
+                
+                // Styling based on status
+                const isPending = data.status === "Pending";
+                const statusBadge = isPending 
+                    ? `<span class="bg-yellow-100 text-yellow-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Pending</span>` 
+                    : `<span class="bg-green-100 text-green-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Resolved</span>`;
+                
+                const replyBox = isPending 
+                    ? `<div class="mt-2 bg-gray-50 p-2 rounded-lg border border-gray-100 text-xs text-gray-400 italic">Waiting for teacher's reply...</div>`
+                    : `<div class="mt-2 bg-blue-50 p-3 rounded-lg border border-blue-100 text-xs text-gray-700 font-medium"><i class="fas fa-reply text-blue-400 mr-1"></i> <b>Reply:</b> ${data.reply}</div>`;
+
+                list.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative">
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="font-bold text-gray-800 text-sm">${data.subject}</h4>
+                            ${statusBadge}
+                        </div>
+                        <p class="text-[10px] text-gray-400 mb-2"><i class="far fa-clock mr-1"></i>${dateStr}</p>
+                        <p class="text-xs text-gray-700 font-medium">Q: ${data.question}</p>
+                        ${replyBox}
+                    </div>
+                `;
+            });
+        });
+    }
+</script>
+</body>
+</html>

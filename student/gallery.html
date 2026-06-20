@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 pb-20 font-sans min-h-screen">
+
+<div class="max-w-md mx-auto">
+    
+    <div class="bg-pink-500 text-white p-4 rounded-b-3xl shadow-md sticky top-0 z-50">
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="window.location.href='dashboard.html'" class="hover:bg-white/20 p-2 rounded-xl transition">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="text-lg font-bold">School Gallery</h1>
+            <div class="w-8"></div>
+        </div>
+        <p class="text-xs text-pink-100 text-center pb-2">Memories & Events!</p>
+    </div>
+
+    <div class="px-4 mt-6">
+        <div id="galleryContainer" class="grid grid-cols-2 gap-3">
+            <div class="col-span-2 text-center py-10">
+                <i class="fas fa-spinner fa-spin text-3xl text-pink-500 mb-2"></i>
+                <p class="text-sm text-gray-500">Loading memories...</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="imageModal" class="fixed inset-0 bg-black/95 z-[60] hidden flex flex-col justify-center items-center p-4 backdrop-blur-sm transition-all duration-300">
+    <button onclick="closeModal()" class="absolute top-6 right-6 text-white/70 hover:text-white p-2 text-2xl">
+        <i class="fas fa-times"></i>
+    </button>
+    
+    <img id="modalImage" src="" alt="Full Screen Image" class="max-w-full max-h-[70vh] rounded-xl object-contain shadow-2xl border border-white/10">
+    
+    <div class="mt-6 text-center w-full max-w-sm">
+        <h3 id="modalCaption" class="text-white font-bold text-lg mb-1">...</h3>
+        <p id="modalDate" class="text-white/50 text-xs font-medium">...</p>
+    </div>
+</div>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    // Auth Check
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../index.html";
+        }
+    });
+
+    // Fetch Gallery Images
+    const galleryQuery = query(collection(db, "gallery"), orderBy("createdAt", "desc"));
+    
+    onSnapshot(galleryQuery, (snapshot) => {
+        const container = document.getElementById('galleryContainer');
+        container.innerHTML = "";
+
+        if (snapshot.empty) {
+            container.innerHTML = `
+                <div class="col-span-2 bg-white p-8 rounded-2xl border border-gray-100 text-center mt-4">
+                    <i class="far fa-images text-gray-300 text-5xl mb-3"></i>
+                    <p class="text-sm font-bold text-gray-600">Gallery is empty.</p>
+                    <p class="text-xs text-gray-400 mt-1">Check back later for event photos!</p>
+                </div>
+            `;
+            return;
+        }
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : '';
+            
+            // Safe string escape for function parameters
+            const safeCaption = data.caption ? data.caption.replace(/'/g, "\\'") : 'School Event';
+            const safeDate = dateStr;
+
+            container.innerHTML += `
+                <div onclick="openModal('${data.imageUrl}', '${safeCaption}', '${safeDate}')" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition group">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="${data.imageUrl}" alt="Gallery Image" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end p-3">
+                            <i class="fas fa-expand text-white text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-bold text-gray-800 text-xs truncate">${data.caption}</h4>
+                        <p class="text-[9px] text-gray-400 mt-0.5">${dateStr}</p>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    // Modal (Lightbox) Logic
+    window.openModal = (imgUrl, caption, dateStr) => {
+        document.getElementById('modalImage').src = imgUrl;
+        document.getElementById('modalCaption').innerText = caption;
+        document.getElementById('modalDate').innerText = dateStr || '';
+        document.getElementById('imageModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Stop background scrolling
+    };
+
+    window.closeModal = () => {
+        document.getElementById('imageModal').classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Restore background scrolling
+    };
+</script>
+</body>
+</html>
