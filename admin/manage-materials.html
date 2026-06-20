@@ -6,42 +6,44 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
-<body class="bg-gray-50 p-4">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-sm mb-6">
-        <h1 class="text-xl font-bold mb-4">Upload Materials</h1>
-        <input type="text" id="title" placeholder="Material Title" class="w-full p-3 border rounded-xl mb-4">
-        <button id="upload_widget" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Upload PDF</button>
-    </div>
+<body class="bg-gray-50 p-6">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg">
+        <h1 class="text-xl font-bold mb-4">Admin Upload</h1>
+        <input type="text" id="title" placeholder="File Title" class="w-full p-3 border rounded-xl mb-3">
+        
+        <select id="className" class="w-full p-3 border rounded-xl mb-3">
+            <option value="Class 10">Class 10</option>
+        </select>
+        
+        <select id="category" class="w-full p-3 border rounded-xl mb-4">
+            <option value="Books">Books</option>
+            <option value="Notes">Notes</option>
+            <option value="PYQ">PYQ</option>
+        </select>
 
-    <div id="materialList" class="max-w-md mx-auto space-y-2"></div>
+        <button id="upload_btn" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Upload PDF</button>
+    </div>
 
 <script type="module">
     import { db } from '../js/firebase-init.js';
-    import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
     const myWidget = cloudinary.createUploadWidget({ 
         cloudName: 'dl1cddemu', 
         uploadPreset: 'upload',
-        resourceType: 'raw' // PDF ke liye zaroori
+        resourceType: 'raw' 
     }, (err, result) => {
         if (!err && result.event === "success") {
-            addDoc(collection(db, "study_materials"), { title: document.getElementById('title').value, fileUrl: result.info.secure_url, createdAt: new Date() });
+            addDoc(collection(db, "study_materials"), { 
+                title: document.getElementById('title').value,
+                className: document.getElementById('className').value,
+                category: document.getElementById('category').value,
+                fileUrl: result.info.secure_url,
+                createdAt: new Date()
+            }).then(() => alert("Saved Successfully!"));
         }
     });
-    document.getElementById("upload_widget").addEventListener("click", () => myWidget.open());
-
-    // Show list
-    onSnapshot(query(collection(db, "study_materials"), orderBy("createdAt", "desc")), (snapshot) => {
-        const list = document.getElementById('materialList');
-        list.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            list.innerHTML += `<div class="bg-white p-4 rounded-xl shadow flex justify-between">
-                               <span>${data.title}</span>
-                               <button class="text-red-500" onclick="deleteDoc(doc(db, 'study_materials', '${docSnap.id}'))">Delete</button></div>`;
-        });
-    });
+    document.getElementById("upload_btn").addEventListener("click", () => myWidget.open());
 </script>
 </body>
 </html>
-   
