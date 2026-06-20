@@ -3,89 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
+    <title>Student App Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hide scrollbar for horizontal scrolling containers */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 pb-20 font-sans">
 
-<div class="max-w-md mx-auto bg-white min-h-screen p-4 shadow-sm">
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg mb-6 relative overflow-hidden">
-        <div class="relative z-10 flex justify-between items-start">
-            <div>
-                <h1 class="text-2xl font-bold" id="studentName">Hello, Student!</h1>
-                <p class="text-blue-100 text-sm mt-1 bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-sm">
-                    <i class="fas fa-graduation-cap mr-1"></i> <span id="studentClassSection">Loading...</span>
-                </p>
+<div class="max-w-md mx-auto bg-gray-50 min-h-screen shadow-sm relative">
+    
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-b-[2.5rem] p-6 text-white text-center shadow-lg relative pb-16">
+        <div class="flex justify-between items-center mb-4">
+            <div class="text-left">
+                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider" id="greetingMsg">Good Morning,</p>
+                <h1 class="text-2xl font-bold truncate w-48" id="studentName">Loading...</h1>
             </div>
-            <button id="logoutBtn" class="bg-white/20 hover:bg-white/40 p-2 rounded-lg text-white transition backdrop-blur-sm">
+            <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 p-2 rounded-xl backdrop-blur-sm transition">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
-        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-    </div>
+        <p class="text-sm bg-white/10 inline-block px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/20">
+            ID: <span id="studentId" class="font-bold">...</span> | <span id="batchName">Batch ...</span>
+        </p>
 
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
-            <div>
-                <p class="text-xs text-blue-600 font-bold uppercase">Assignments</p>
-                <h3 class="text-2xl font-bold text-gray-800" id="assignCount">0</h3>
-            </div>
-            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                <i class="fas fa-book"></i>
-            </div>
-        </div>
-        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
-            <div>
-                <p class="text-xs text-emerald-600 font-bold uppercase">Results</p>
-                <h3 class="text-2xl font-bold text-gray-800" id="resultCount">0</h3>
-            </div>
-            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-                <i class="fas fa-trophy"></i>
+        <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
+            <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
+                <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-full h-full rounded-full object-cover border border-gray-100">
             </div>
         </div>
     </div>
 
-    <h2 class="text-sm font-bold text-gray-400 uppercase mb-3 px-1">My Portal</h2>
-    <div class="grid grid-cols-4 gap-3 mb-8">
-        <button onclick="window.location.href='attendance.html'" class="flex flex-col items-center">
-            <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 mb-1 hover:bg-indigo-100 transition">
-                <i class="fas fa-calendar-check text-xl"></i>
+    <div class="mt-14 px-4">
+        <div class="flex gap-3 overflow-x-auto no-scrollbar py-2">
+            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <i class="fas fa-chart-pie text-blue-500 text-2xl mb-2"></i>
+                <h3 class="text-lg font-bold text-gray-800">85%</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Attendance</p>
             </div>
-            <span class="text-[10px] font-bold text-gray-600">Attendance</span>
-        </button>
+            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <i class="fas fa-tasks text-orange-500 text-2xl mb-2"></i>
+                <h3 class="text-lg font-bold text-gray-800" id="assignCount">0</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Pending HW</p>
+            </div>
+            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <i class="fas fa-file-signature text-purple-500 text-2xl mb-2"></i>
+                <h3 class="text-lg font-bold text-gray-800">2</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Upc. Tests</p>
+            </div>
+            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <i class="fas fa-rupee-sign text-red-500 text-2xl mb-2"></i>
+                <h3 class="text-lg font-bold text-gray-800">₹0</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Pending Fee</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-4 mt-6">
+        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Quick Access</h2>
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="window.location.href='live-classes.html'" class="bg-red-50 p-3 rounded-2xl flex flex-col items-center border border-red-100 hover:bg-red-100 transition">
+                <i class="fas fa-video text-red-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Live Class</span>
+            </button>
+            <button onclick="window.location.href='materials.html'" class="bg-blue-50 p-3 rounded-2xl flex flex-col items-center border border-blue-100 hover:bg-blue-100 transition">
+                <i class="fas fa-book-open text-blue-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Materials</span>
+            </button>
+            <button onclick="window.location.href='assignments.html'" class="bg-green-50 p-3 rounded-2xl flex flex-col items-center border border-green-100 hover:bg-green-100 transition">
+                <i class="fas fa-clipboard-list text-green-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Assignments</span>
+            </button>
+            <button onclick="window.location.href='tests.html'" class="bg-purple-50 p-3 rounded-2xl flex flex-col items-center border border-purple-100 hover:bg-purple-100 transition">
+                <i class="fas fa-laptop-code text-purple-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Mock Tests</span>
+            </button>
+            <button onclick="window.location.href='results.html'" class="bg-orange-50 p-3 rounded-2xl flex flex-col items-center border border-orange-100 hover:bg-orange-100 transition">
+                <i class="fas fa-trophy text-orange-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Results</span>
+            </button>
+            <button onclick="window.location.href='fees.html'" class="bg-teal-50 p-3 rounded-2xl flex flex-col items-center border border-teal-100 hover:bg-teal-100 transition">
+                <i class="fas fa-wallet text-teal-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Fees</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="px-4 mt-8">
+        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Today's Schedule</h2>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center mb-3">
+            <div>
+                <p class="text-xs text-blue-600 font-bold">10:00 AM - 11:00 AM</p>
+                <h4 class="font-bold text-gray-800">Mathematics</h4>
+                <p class="text-[11px] text-gray-500"><i class="fas fa-user-tie mr-1"></i> Rahul Sir</p>
+            </div>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-blue-700 transition">Join Class</button>
+        </div>
+    </div>
+
+    <div class="px-4 mt-6">
+        <div class="flex justify-between items-end mb-3 px-1">
+            <h2 class="text-sm font-bold text-gray-800">Pending Tasks</h2>
+            <span class="text-[10px] font-bold text-blue-600 cursor-pointer hover:underline">View All</span>
+        </div>
         
-        <button onclick="window.location.href='fees.html'" class="flex flex-col items-center">
-            <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 shadow-sm border border-green-100 mb-1 hover:bg-green-100 transition">
-                <i class="fas fa-wallet text-xl"></i>
-            </div>
-            <span class="text-[10px] font-bold text-gray-600">Fees</span>
-        </button>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-red-100 text-red-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">Due Tomorrow</div>
+            <h4 class="font-bold text-gray-800 text-sm">Science Chapter 4 Notes</h4>
+            <p class="text-xs text-gray-500 mt-1">Subject: Science • Status: Pending</p>
+            <button class="mt-3 text-xs text-blue-600 font-bold border border-blue-200 px-3 py-1.5 rounded-lg w-full hover:bg-blue-50 transition">Submit Assignment</button>
+        </div>
 
-        <button onclick="window.location.href='notifications.html'" class="flex flex-col items-center">
-            <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600 shadow-sm border border-yellow-100 mb-1 hover:bg-yellow-100 transition">
-                <i class="fas fa-bell text-xl"></i>
-            </div>
-            <span class="text-[10px] font-bold text-gray-600">Notices</span>
-        </button>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-purple-100 text-purple-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">24 Jun, 9:00 AM</div>
+            <h4 class="font-bold text-gray-800 text-sm">Weekly Mock Test 1</h4>
+            <p class="text-xs text-gray-500 mt-1">Syllabus: Full Chapters • 50 Marks</p>
+            <button class="mt-3 text-xs text-white bg-purple-600 font-bold border border-purple-600 px-3 py-1.5 rounded-lg w-full hover:bg-purple-700 transition shadow-md">Start Test</button>
+        </div>
+    </div>
 
-        <button onclick="window.location.href='complaints.html'" class="flex flex-col items-center">
-            <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 shadow-sm border border-red-100 mb-1 hover:bg-red-100 transition">
-                <i class="fas fa-headset text-xl"></i>
+    <div class="px-4 mt-8">
+        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Performance Analysis</h2>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase font-bold">Current Rank</p>
+                    <h3 class="text-xl font-bold text-blue-600">#12 <span class="text-xs text-gray-400 font-normal">in Class</span></h3>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-500 uppercase font-bold">Avg Score</p>
+                    <h3 class="text-xl font-bold text-green-600">82%</h3>
+                </div>
             </div>
-            <span class="text-[10px] font-bold text-gray-600">Support</span>
+            
+            <div class="space-y-3">
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-1"><span>Mathematics</span><span class="text-blue-600">92%</span></div>
+                    <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-1"><span>Science</span><span class="text-emerald-500">78%</span></div>
+                    <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-emerald-500 h-2 rounded-full" style="width: 78%"></div></div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-red-50 rounded-xl border border-red-100">
+                <p class="text-xs font-bold text-red-600 mb-1"><i class="fas fa-exclamation-triangle mr-1"></i> Weak Topics to Improve</p>
+                <p class="text-[11px] text-gray-600">Trigonometry (Maths), Chemical Reactions (Science)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-4 mt-8">
+        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Latest Announcements</h2>
+        <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-start gap-3">
+            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 flex-shrink-0">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-gray-800 text-sm">Holiday Notice</h4>
+                <p class="text-xs text-gray-600 mt-1">School will remain closed tomorrow due to heavy rainfall. Online classes will be held.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-4 mt-8 mb-6">
+        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Support & Help</h2>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="window.location.href='doubts.html'" class="bg-white p-3 rounded-2xl border border-gray-200 flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-sm">
+                <i class="fas fa-question-circle text-blue-500"></i><span class="text-xs font-bold text-gray-700">Ask Doubts</span>
+            </button>
+            <button onclick="window.location.href='support.html'" class="bg-white p-3 rounded-2xl border border-gray-200 flex items-center justify-center gap-2 hover:bg-green-50 transition shadow-sm">
+                <i class="fas fa-headset text-green-500"></i><span class="text-xs font-bold text-gray-700">Contact Support</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center p-3 z-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <button class="flex flex-col items-center text-blue-600">
+            <i class="fas fa-home text-lg mb-1"></i>
+            <span class="text-[9px] font-bold">Home</span>
+        </button>
+        <button onclick="window.location.href='live-classes.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+            <i class="fas fa-play-circle text-lg mb-1"></i>
+            <span class="text-[9px] font-bold">Classes</span>
+        </button>
+        <button onclick="window.location.href='tests.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+            <i class="fas fa-edit text-lg mb-1"></i>
+            <span class="text-[9px] font-bold">Tests</span>
+        </button>
+        <button onclick="window.location.href='notifications.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition relative">
+            <div class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+            <i class="fas fa-bell text-lg mb-1"></i>
+            <span class="text-[9px] font-bold">Notices</span>
+        </button>
+        <button onclick="window.location.href='profile.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+            <i class="fas fa-user text-lg mb-1"></i>
+            <span class="text-[9px] font-bold">Profile</span>
         </button>
     </div>
 
-    <div class="mt-4">
-        <div class="flex justify-between items-end mb-4 px-1">
-            <h2 class="font-bold text-gray-800">Recent Assignments</h2>
-            <span class="text-xs font-bold text-blue-600 cursor-pointer">View All</span>
-        </div>
-        <div id="assignmentList" class="space-y-3">
-            <p class="text-center text-sm text-gray-400 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200" id="assignMsg">Loading assignments...</p>
-        </div>
-    </div>
 </div>
 
 <script type="module">
@@ -93,60 +207,45 @@
     import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
+    // Set Greeting based on time
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good Morning,' : (hour < 18 ? 'Good Afternoon,' : 'Good Evening,');
+    document.getElementById('greetingMsg').innerText = greeting;
+
+    // Database Fetching Logic (Only for Header Profile data for now)
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // 1. Get Student Profile
             const userDoc = await getDoc(doc(db, "users", user.uid));
-            
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 
-                // Name Update
-                document.getElementById('studentName').innerText = `Hello, ${userData.name || userData.firstName || 'Student'}!`;
-                
-                // Class & Section Fallback (Undefined Fix)
-                let cls = userData.class ? `Class ${userData.class}` : 'Class Not Assigned';
-                let sec = userData.section ? ` - ${userData.section}` : '';
-                document.getElementById('studentClassSection').innerText = cls + sec;
+                // Top Section Details
+                document.getElementById('studentName').innerText = userData.name || userData.firstName || 'Student';
+                document.getElementById('studentId').innerText = userData.studentId || userData.admissionNo || 'N/A';
+                let cls = userData.class ? `Class ${userData.class}` : 'Unassigned';
+                let sec = userData.section ? ` ${userData.section}` : '';
+                document.getElementById('batchName').innerText = cls + sec;
 
-                // 2. Fetch Assignments if Class is assigned
+                if(userData.photoBase64) {
+                    document.getElementById('profilePhoto').src = userData.photoBase64;
+                }
+
+                // Temporary Assignment Counter
                 if(userData.class) {
                     const q = query(collection(db, "assignments"), where("targetClass", "==", userData.class));
                     onSnapshot(q, (snapshot) => {
-                        const list = document.getElementById('assignmentList');
                         document.getElementById('assignCount').innerText = snapshot.size;
-                        
-                        if(snapshot.size === 0) {
-                            list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No pending assignments! 🎉</p>`;
-                        } else {
-                            list.innerHTML = "";
-                            snapshot.forEach((docSnap) => {
-                                const data = docSnap.data();
-                                list.innerHTML += `
-                                    <div class="p-4 border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-bold text-gray-800 text-sm">${data.title}</h4>
-                                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">New</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 line-clamp-2">${data.description}</p>
-                                    </div>
-                                `;
-                            });
-                        }
                     });
-                } else {
-                    document.getElementById('assignmentList').innerHTML = `<p class="text-center text-sm text-gray-400 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">Please ask Admin to assign your Class.</p>`;
                 }
             } else {
-                // If document deleted
-                window.location.href = "../index.html";
+                window.location.href = "../index.html"; 
             }
         } else {
-            window.location.href = "../index.html";
+            window.location.href = "../index.html"; 
         }
     });
 
-    // Logout Logic
+    // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         if(confirm("Are you sure you want to logout?")) {
             await signOut(auth);
@@ -156,4 +255,3 @@
 </script>
 </body>
 </html>
-
