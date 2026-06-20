@@ -5,67 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 p-4">
+<body class="bg-gray-50">
 
-<div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-800" id="studentName">Hello Student!</h1>
-    <p class="text-gray-500 mb-6">Your Class: <span id="studentClassSection" class="font-bold">Loading...</span></p>
-
-    <div class="grid grid-cols-2 gap-4">
-        <div class="bg-blue-50 p-4 rounded-xl text-center">
-            <h3 class="text-sm font-bold text-blue-600">Assignments</h3>
-            <p id="assignCount" class="text-xl font-bold">0</p>
+<div class="max-w-md mx-auto bg-white min-h-screen p-4 shadow-sm">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg mb-6 relative overflow-hidden">
+        <div class="relative z-10 flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold" id="studentName">Hello, Student!</h1>
+                <p class="text-blue-100 text-sm mt-1 bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-sm">
+                    <i class="fas fa-graduation-cap mr-1"></i> <span id="studentClassSection">Loading...</span>
+                </p>
+            </div>
+            <button id="logoutBtn" class="bg-white/20 hover:bg-white/40 p-2 rounded-lg text-white transition backdrop-blur-sm">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
-        <div class="bg-green-50 p-4 rounded-xl text-center">
-            <h3 class="text-sm font-bold text-green-600">Results</h3>
-            <p id="resultCount" class="text-xl font-bold">0</p>
+        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-blue-600 font-bold uppercase">Assignments</p>
+                <h3 class="text-2xl font-bold text-gray-800" id="assignCount">0</h3>
+            </div>
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                <i class="fas fa-book"></i>
+            </div>
+        </div>
+        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-emerald-600 font-bold uppercase">Results</p>
+                <h3 class="text-2xl font-bold text-gray-800" id="resultCount">0</h3>
+            </div>
+            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                <i class="fas fa-trophy"></i>
+            </div>
         </div>
     </div>
 
-    <div class="mt-8">
-        <h2 class="font-bold text-gray-800 mb-4">Your Assignments</h2>
-        <div id="assignmentList" class="space-y-3">
+    <h2 class="text-sm font-bold text-gray-400 uppercase mb-3 px-1">My Portal</h2>
+    <div class="grid grid-cols-4 gap-3 mb-8">
+        <button onclick="window.location.href='attendance.html'" class="flex flex-col items-center">
+            <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 mb-1 hover:bg-indigo-100 transition">
+                <i class="fas fa-calendar-check text-xl"></i>
             </div>
+            <span class="text-[10px] font-bold text-gray-600">Attendance</span>
+        </button>
+        
+        <button onclick="window.location.href='fees.html'" class="flex flex-col items-center">
+            <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 shadow-sm border border-green-100 mb-1 hover:bg-green-100 transition">
+                <i class="fas fa-wallet text-xl"></i>
+            </div>
+            <span class="text-[10px] font-bold text-gray-600">Fees</span>
+        </button>
+
+        <button onclick="window.location.href='notifications.html'" class="flex flex-col items-center">
+            <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600 shadow-sm border border-yellow-100 mb-1 hover:bg-yellow-100 transition">
+                <i class="fas fa-bell text-xl"></i>
+            </div>
+            <span class="text-[10px] font-bold text-gray-600">Notices</span>
+        </button>
+
+        <button onclick="window.location.href='complaints.html'" class="flex flex-col items-center">
+            <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 shadow-sm border border-red-100 mb-1 hover:bg-red-100 transition">
+                <i class="fas fa-headset text-xl"></i>
+            </div>
+            <span class="text-[10px] font-bold text-gray-600">Support</span>
+        </button>
+    </div>
+
+    <div class="mt-4">
+        <div class="flex justify-between items-end mb-4 px-1">
+            <h2 class="font-bold text-gray-800">Recent Assignments</h2>
+            <span class="text-xs font-bold text-blue-600 cursor-pointer">View All</span>
+        </div>
+        <div id="assignmentList" class="space-y-3">
+            <p class="text-center text-sm text-gray-400 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200" id="assignMsg">Loading assignments...</p>
+        </div>
     </div>
 </div>
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
     import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // 1. स्टूडेंट की प्रोफाइल डिटेल निकालें (Class & Section)
+            // 1. Get Student Profile
             const userDoc = await getDoc(doc(db, "users", user.uid));
-            const userData = userDoc.data();
             
-            document.getElementById('studentName').innerText = `Hello, ${userData.name}`;
-            document.getElementById('studentClassSection').innerText = `Class ${userData.class}-${userData.section}`;
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                
+                // Name Update
+                document.getElementById('studentName').innerText = `Hello, ${userData.name || userData.firstName || 'Student'}!`;
+                
+                // Class & Section Fallback (Undefined Fix)
+                let cls = userData.class ? `Class ${userData.class}` : 'Class Not Assigned';
+                let sec = userData.section ? ` - ${userData.section}` : '';
+                document.getElementById('studentClassSection').innerText = cls + sec;
 
-            // 2. सिर्फ उसी क्लास के असाइनमेंट लोड करें (Filtered Query)
-            const q = query(collection(db, "assignments"), where("targetClass", "==", userData.class));
-            
-            onSnapshot(q, (snapshot) => {
-                const list = document.getElementById('assignmentList');
-                list.innerHTML = "";
-                document.getElementById('assignCount').innerText = snapshot.size;
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    list.innerHTML += `
-                        <div class="p-4 border rounded-xl bg-white shadow-sm">
-                            <h4 class="font-bold text-gray-800">${data.title}</h4>
-                            <p class="text-sm text-gray-600">${data.description}</p>
-                        </div>
-                    `;
-                });
-            });
+                // 2. Fetch Assignments if Class is assigned
+                if(userData.class) {
+                    const q = query(collection(db, "assignments"), where("targetClass", "==", userData.class));
+                    onSnapshot(q, (snapshot) => {
+                        const list = document.getElementById('assignmentList');
+                        document.getElementById('assignCount').innerText = snapshot.size;
+                        
+                        if(snapshot.size === 0) {
+                            list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No pending assignments! 🎉</p>`;
+                        } else {
+                            list.innerHTML = "";
+                            snapshot.forEach((docSnap) => {
+                                const data = docSnap.data();
+                                list.innerHTML += `
+                                    <div class="p-4 border border-gray-100 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-bold text-gray-800 text-sm">${data.title}</h4>
+                                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">New</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 line-clamp-2">${data.description}</p>
+                                    </div>
+                                `;
+                            });
+                        }
+                    });
+                } else {
+                    document.getElementById('assignmentList').innerHTML = `<p class="text-center text-sm text-gray-400 py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">Please ask Admin to assign your Class.</p>`;
+                }
+            } else {
+                // If document deleted
+                window.location.href = "../index.html";
+            }
         } else {
+            window.location.href = "../index.html";
+        }
+    });
+
+    // Logout Logic
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if(confirm("Are you sure you want to logout?")) {
+            await signOut(auth);
             window.location.href = "../index.html";
         }
     });
 </script>
 </body>
 </html>
+
