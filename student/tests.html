@@ -7,310 +7,140 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        input[type="radio"] { accent-color: #9333ea; width: 1.2rem; height: 1.2rem; }
         .tab-active { background-color: #ffffff; color: #7e22ce; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 0.75rem; }
         .tab-inactive { color: #d8b4fe; font-weight: 500; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen select-none">
+<body class="bg-gray-50 min-h-screen font-sans pb-24">
 
 <div class="max-w-md mx-auto relative h-full">
     
-    <div id="mainDashboardView" class="block pb-24">
-        <header class="bg-gradient-to-r from-purple-600 to-indigo-700 pt-6 pb-4 px-6 text-white shadow-md rounded-b-[2.5rem] relative mb-4">
+    <div id="mainDashboardView" class="block">
+        <header class="bg-gradient-to-r from-purple-600 to-indigo-700 pt-6 pb-4 px-6 text-white shadow-md rounded-b-[2.5rem] mb-4">
             <div class="flex items-center gap-4 mb-4">
-                <button onclick="window.location.href='dashboard.html'" class="bg-white/20 hover:bg-white/30 p-2 rounded-xl backdrop-blur-sm transition">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-wide">Mock Tests</h1>
-                    <p class="text-xs text-purple-200 mt-0.5">Attempt tests & track performance</p>
-                </div>
+                <button onclick="window.location.href='dashboard.html'" class="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition"><i class="fas fa-arrow-left"></i></button>
+                <div><h1 class="text-2xl font-bold tracking-wide">Mock Tests</h1></div>
             </div>
-
-            <div class="bg-white/10 p-1 rounded-2xl flex backdrop-blur-sm mt-4 border border-white/20">
-                <button onclick="switchTab('activeTests')" id="btnActive" class="flex-1 py-2.5 text-sm transition tab-active">
-                    <i class="fas fa-laptop-code mr-1"></i> Active Tests
-                </button>
-                <button onclick="switchTab('resultsTests')" id="btnResults" class="flex-1 py-2.5 text-sm transition tab-inactive">
-                    <i class="fas fa-trophy mr-1"></i> My Results
-                </button>
+            <div class="bg-white/10 p-1 rounded-2xl flex backdrop-blur-sm border border-white/20">
+                <button onclick="switchTab('activeTests')" id="btnActive" class="flex-1 py-2.5 text-sm transition tab-active"><i class="fas fa-laptop-code mr-1"></i> Active</button>
+                <button onclick="switchTab('resultsTests')" id="btnResults" class="flex-1 py-2.5 text-sm transition tab-inactive"><i class="fas fa-trophy mr-1"></i> Results</button>
             </div>
         </header>
 
-        <main id="activeTests" class="px-4 space-y-4">
-            <div class="text-center py-10"><i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-2"></i><p class="text-sm text-gray-500">Loading tests...</p></div>
-        </main>
-
-        <main id="resultsTests" class="px-4 space-y-4 hidden">
-            <div class="text-center py-10"><i class="fas fa-spinner fa-spin text-3xl text-purple-500 mb-2"></i><p class="text-sm text-gray-500">Loading results...</p></div>
-        </main>
-
-        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center p-3 z-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-            <button onclick="window.location.href='dashboard.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600"><i class="fas fa-home text-lg mb-1"></i><span class="text-[9px] font-bold">Home</span></button>
-            <button onclick="window.location.href='live-classes.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600"><i class="fas fa-play-circle text-lg mb-1"></i><span class="text-[9px] font-bold">Classes</span></button>
-            <button class="flex flex-col items-center text-blue-600"><i class="fas fa-edit text-lg mb-1"></i><span class="text-[9px] font-bold">Tests</span></button>
-            <button onclick="window.location.href='notifications.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600"><i class="fas fa-bell text-lg mb-1"></i><span class="text-[9px] font-bold">Notices</span></button>
-            <button onclick="window.location.href='profile.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600"><i class="fas fa-user text-lg mb-1"></i><span class="text-[9px] font-bold">Profile</span></button>
-        </div>
+        <main id="activeTests" class="px-4 space-y-4"></main>
+        <main id="resultsTests" class="px-4 space-y-4 hidden"></main>
     </div>
 
-    <div id="activeExamView" class="hidden bg-gray-50 min-h-screen pb-24">
-        <div class="bg-white p-4 shadow-sm sticky top-0 z-50 border-b-4 border-purple-600 flex justify-between items-center">
-            <div>
-                <h2 class="text-sm font-bold text-gray-800" id="activeTestTitle">Test Name</h2>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Do not refresh page</p>
-            </div>
-            <div class="bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 flex items-center gap-2 text-red-600">
-                <i class="fas fa-clock animate-pulse"></i>
-                <span id="timerDisplay" class="font-bold text-lg tracking-wider">00:00</span>
-            </div>
+    <div id="activeExamView" class="hidden bg-gray-50 min-h-screen p-4">
+        <div class="bg-white p-4 shadow-sm rounded-xl mb-6 flex justify-between items-center">
+            <h2 class="font-bold text-gray-800" id="activeTestTitle"></h2>
+            <div class="text-red-600 font-bold" id="timerDisplay">00:00</div>
         </div>
-
-        <div class="px-4 mt-6 space-y-6" id="questionsContainer"></div>
-
-        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-            <button onclick="submitTest()" id="submitTestBtn" class="w-full bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 shadow-md transition text-lg">
-                Submit Test
-            </button>
-        </div>
+        <div id="questionsContainer" class="space-y-6 pb-20"></div>
+        <button onclick="submitTest()" id="submitTestBtn" class="fixed bottom-4 left-4 right-4 bg-purple-600 text-white font-bold py-4 rounded-xl shadow-lg">Submit Test</button>
     </div>
 
     <div id="resultView" class="hidden min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-5xl mb-6 shadow-inner">
-            <i class="fas fa-check-circle"></i>
+        <div class="text-5xl text-green-500 mb-6"><i class="fas fa-check-circle"></i></div>
+        <h1 class="text-3xl font-bold mb-8">Test Submitted!</h1>
+        <div class="bg-white w-full p-6 rounded-3xl shadow-lg mb-8">
+            <p class="text-xs font-bold uppercase mb-2">Score</p>
+            <div class="text-5xl font-bold text-purple-600 mb-4" id="scoreDisplay">0 / 0</div>
         </div>
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Test Submitted!</h1>
-        <p class="text-gray-500 mb-8">Great job completing the test.</p>
-
-        <div class="bg-white w-full p-6 rounded-3xl shadow-lg border border-gray-100 mb-8">
-            <p class="text-xs text-gray-400 font-bold uppercase mb-2">Your Score</p>
-            <div class="text-5xl font-bold text-purple-600 mb-4 tracking-tighter" id="scoreDisplay">0 / 0</div>
-            <div class="w-full bg-gray-100 rounded-full h-3 mb-2">
-                <div id="scoreBar" class="bg-purple-500 h-3 rounded-full transition-all duration-1000" style="width: 0%"></div>
-            </div>
-            <p class="text-xs font-bold text-gray-500" id="percentageDisplay">0% Accuracy</p>
-        </div>
-
-        <button onclick="window.location.reload()" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl hover:bg-gray-900 transition">
-            Back to Tests Menu
-        </button>
+        <button onclick="window.location.reload()" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl">Back to Menu</button>
     </div>
-
 </div>
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { doc, getDoc, collection, query, onSnapshot, addDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    let currentUser = null;
-    let studentData = null;
-    let allTests = [];
-    let pastResults = {}; 
-    let currentActiveTest = null;
-    let timerInterval = null;
+    let currentUser = null, studentData = null, allTests = [], pastResults = {}, currentActiveTest = null, timerInterval = null;
 
-    const activeContainer = document.getElementById('activeTests');
-    const resultsContainer = document.getElementById('resultsTests');
-
-    // UI Tab Switcher
-    window.switchTab = (tabName) => {
-        if(tabName === 'activeTests') {
-            document.getElementById('activeTests').classList.remove('hidden');
-            document.getElementById('resultsTests').classList.add('hidden');
-            document.getElementById('btnActive').className = "flex-1 py-2.5 text-sm transition tab-active";
-            document.getElementById('btnResults').className = "flex-1 py-2.5 text-sm transition tab-inactive";
-        } else {
-            document.getElementById('activeTests').classList.add('hidden');
-            document.getElementById('resultsTests').classList.remove('hidden');
-            document.getElementById('btnActive').className = "flex-1 py-2.5 text-sm transition tab-inactive";
-            document.getElementById('btnResults').className = "flex-1 py-2.5 text-sm transition tab-active";
-        }
-    };
-
-    // 1. Check Auth & Load Data
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 studentData = userDoc.data();
-                
-                // Fetch Results First
-                const resultsQuery = query(collection(db, "results"), where("studentId", "==", user.uid));
-                onSnapshot(resultsQuery, (resSnap) => {
-                    pastResults = {};
-                    resSnap.forEach(r => { pastResults[r.data().testId] = r.data(); });
-                    
-                    // Fetch Tests
-                    if(studentData.class) fetchTests(studentData.class);
-                    else activeContainer.innerHTML = `<p class="text-center text-red-500 py-10">Class not assigned.</p>`;
-                });
+                loadData();
             }
-        } else {
-            window.location.href = "../index.html";
         }
     });
 
-    function fetchTests(studentClass) {
-        const q = query(collection(db, "tests"), where("targetClass", "==", String(studentClass)));
-        onSnapshot(q, (snapshot) => {
-            allTests = [];
-            activeContainer.innerHTML = "";
-            resultsContainer.innerHTML = "";
+    function loadData() {
+        // Fetch Results
+        onSnapshot(collection(db, "results"), (snap) => {
+            pastResults = {};
+            snap.forEach(r => { if(r.data().studentId === currentUser.uid) pastResults[r.data().testId] = r.data(); });
             
-            let activeCount = 0;
-            let resultCount = 0;
-
-            snapshot.forEach((docSnap) => {
-                const test = { id: docSnap.id, ...docSnap.data() };
-                allTests.push(test);
+            // Fetch Tests
+            onSnapshot(collection(db, "tests"), (snap) => {
+                const activeCont = document.getElementById('activeTests');
+                const resultCont = document.getElementById('resultsTests');
+                activeCont.innerHTML = ""; resultCont.innerHTML = "";
                 
-                const hasResult = pastResults[test.id];
+                snap.forEach(docSnap => {
+                    const test = { id: docSnap.id, ...docSnap.data() };
+                    if(String(test.targetClass) !== String(studentData.class)) return;
 
-                if(hasResult) {
-                    resultCount++;
-                    const score = hasResult.score || 0;
-                    const total = hasResult.totalQuestions || test.totalQuestions || 100;
-                    const percentage = Math.round((score / total) * 100);
-                    let badgeColor = percentage >= 40 ? "text-green-600 bg-green-50 border-green-200" : "text-red-600 bg-red-50 border-red-200";
-                    let statusText = percentage >= 40 ? "PASS" : "FAIL";
-
-                    resultsContainer.innerHTML += `
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4 relative">
-                            <div class="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[10px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-gray-200">Attempted</div>
-                            <h3 class="font-bold text-gray-800 text-lg pr-16">${test.title}</h3>
-                            <p class="text-xs text-gray-500 mt-0.5"><i class="fas fa-list-ol mr-1"></i>${test.totalQuestions} Questions</p>
-                            
-                            <div class="mt-4 p-4 rounded-2xl border ${badgeColor} flex justify-between items-center">
-                                <div><p class="text-[10px] font-bold uppercase mb-0.5 opacity-80">Your Score</p><h4 class="text-2xl font-black">${score} <span class="text-sm font-medium opacity-70">/ ${total}</span></h4></div>
-                                <div><span class="inline-block px-3 py-1 bg-white rounded-lg text-sm font-bold shadow-sm border border-current">${statusText}</span></div>
-                            </div>
-                        </div>`;
-                } else {
-                    activeCount++;
-                    activeContainer.innerHTML += `
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 relative overflow-hidden hover:shadow-md transition">
-                            <div class="absolute top-0 right-0 bg-purple-100 text-purple-600 text-[10px] font-bold px-3 py-1.5 rounded-bl-xl">${test.duration} Mins</div>
-                            <h3 class="font-bold text-gray-800 text-lg mb-1 pr-16">${test.title}</h3>
-                            <p class="text-xs text-gray-500 mb-4"><i class="fas fa-list-ol mr-1"></i> ${test.totalQuestions} Questions</p>
-                            <button onclick="startExam('${test.id}')" class="w-full bg-purple-50 text-purple-600 font-bold py-2.5 rounded-xl border border-purple-200 hover:bg-purple-100 transition">
-                                Start Test Now
-                            </button>
-                        </div>`;
-                }
+                    if(pastResults[test.id]) {
+                        const res = pastResults[test.id];
+                        resultCont.innerHTML += `<div class="bg-white p-5 rounded-3xl shadow-sm mb-4"><h3 class="font-bold">${test.title}</h3><p class="text-2xl font-black text-purple-600">${res.score}/${res.totalQuestions}</p></div>`;
+                    } else {
+                        activeCont.innerHTML += `<div class="bg-white p-5 rounded-2xl shadow-sm mb-4"><h3 class="font-bold mb-4">${test.title}</h3><button onclick="startExam('${test.id}')" class="w-full bg-purple-600 text-white py-2 rounded-xl font-bold">Start Test</button></div>`;
+                    }
+                });
             });
-
-            if(activeCount === 0) activeContainer.innerHTML = `<div class="bg-white p-8 rounded-3xl shadow-sm text-center mt-6"><i class="fas fa-check-circle text-4xl text-purple-200 mb-3"></i><p class="font-bold text-gray-800">No Pending Tests!</p></div>`;
-            if(resultCount === 0) resultsContainer.innerHTML = `<div class="bg-white p-8 rounded-3xl shadow-sm text-center mt-6"><i class="fas fa-history text-4xl text-gray-200 mb-3"></i><p class="font-bold text-gray-800">No Results Yet</p></div>`;
         });
     }
 
-    // 2. Start Exam Logic
-    window.startExam = (testId) => {
-        if(!confirm("Are you ready? The timer will start immediately.")) return;
+    window.switchTab = (t) => {
+        document.getElementById('activeTests').classList.toggle('hidden', t !== 'activeTests');
+        document.getElementById('resultsTests').classList.toggle('hidden', t !== 'resultsTests');
+        document.getElementById('btnActive').className = t === 'activeTests' ? 'flex-1 py-2.5 tab-active' : 'flex-1 py-2.5 tab-inactive';
+        document.getElementById('btnResults').className = t === 'resultsTests' ? 'flex-1 py-2.5 tab-active' : 'flex-1 py-2.5 tab-inactive';
+    };
 
-        currentActiveTest = allTests.find(t => t.id === testId);
-        
+    window.startExam = (id) => {
+        currentActiveTest = allTests.find(t => t.id === id) || { ...allTests.find(t => t.id === id), questions: [] };
+        // Fetch full data for the selected test if needed
         document.getElementById('mainDashboardView').classList.add('hidden');
         document.getElementById('activeExamView').classList.remove('hidden');
         document.getElementById('activeTestTitle').innerText = currentActiveTest.title;
-
-        renderQuestions(currentActiveTest.questions);
+        
+        let html = "";
+        currentActiveTest.questions.forEach((q, i) => {
+            html += `<div class="bg-white p-4 rounded-xl shadow-sm"><p class="font-bold mb-3">${i+1}. ${q.question}</p>
+            ${['A','B','C','D'].map(opt => `<label class="flex items-center p-2 border rounded mb-2"><input type="radio" name="q${i}" value="${opt}" class="mr-2">${q.options[opt]}</label>`).join('')}</div>`;
+        });
+        document.getElementById('questionsContainer').innerHTML = html;
         startTimer(currentActiveTest.duration);
     };
 
-    function renderQuestions(questions) {
-        const container = document.getElementById('questionsContainer');
-        container.innerHTML = "";
-
-        questions.forEach((q, index) => {
-            container.innerHTML += `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <p class="text-xs font-bold text-purple-600 mb-2 uppercase">Question ${index + 1}</p>
-                    <h3 class="text-sm font-bold text-gray-800 mb-4">${q.question}</h3>
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="A"> <span class="text-sm text-gray-700">${q.options.A}</span></label>
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="B"> <span class="text-sm text-gray-700">${q.options.B}</span></label>
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="C"> <span class="text-sm text-gray-700">${q.options.C}</span></label>
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="D"> <span class="text-sm text-gray-700">${q.options.D}</span></label>
-                    </div>
-                </div>`;
-        });
-    }
-
-    function startTimer(minutes) {
-        let timeInSeconds = minutes * 60;
-        const display = document.getElementById('timerDisplay');
-
+    function startTimer(min) {
+        let sec = min * 60;
         timerInterval = setInterval(() => {
-            if (timeInSeconds <= 0) {
-                clearInterval(timerInterval);
-                alert("Time is up! Auto-submitting your test.");
-                submitTest();
-                return;
-            }
-            const min = Math.floor(timeInSeconds / 60);
-            const sec = timeInSeconds % 60;
-            display.innerText = `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
-
-            if(timeInSeconds <= 60) {
-                display.classList.remove('text-red-600');
-                display.classList.add('text-red-700', 'animate-bounce');
-            }
-            timeInSeconds--;
+            sec--;
+            document.getElementById('timerDisplay').innerText = Math.floor(sec/60)+":"+(sec%60).toString().padStart(2,'0');
+            if(sec <= 0) { clearInterval(timerInterval); submitTest(); }
         }, 1000);
     }
 
-    // 3. Submit & Check Logic
     window.submitTest = async () => {
-        clearInterval(timerInterval); 
-        document.getElementById('submitTestBtn').disabled = true;
-        document.getElementById('submitTestBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
+        clearInterval(timerInterval);
         let score = 0;
-        const total = currentActiveTest.questions.length;
-
-        currentActiveTest.questions.forEach((q, index) => {
-            const selectedOpt = document.querySelector(`input[name="q_${index}"]:checked`);
-            if (selectedOpt && selectedOpt.value === q.correctAnswer) score++;
+        currentActiveTest.questions.forEach((q, i) => {
+            const sel = document.querySelector(`input[name="q${i}"]:checked`);
+            if(sel && sel.value === q.correctAnswer) score++;
         });
-
-        try {
-            await addDoc(collection(db, "results"), {
-                studentId: currentUser.uid,
-                studentName: studentData.name || studentData.firstName,
-                testId: currentActiveTest.id,
-                testTitle: currentActiveTest.title,
-                score: score,
-                totalQuestions: total,
-                timestamp: serverTimestamp()
-            });
-            showResultScreen(score, total);
-        } catch (err) {
-            alert("Error saving result: " + err.message);
-            document.getElementById('submitTestBtn').disabled = false;
-        }
-    };
-
-    function showResultScreen(score, total) {
+        await addDoc(collection(db, "results"), { studentId: currentUser.uid, testId: currentActiveTest.id, score, totalQuestions: currentActiveTest.totalQuestions, timestamp: serverTimestamp() });
         document.getElementById('activeExamView').classList.add('hidden');
         document.getElementById('resultView').classList.remove('hidden');
-        document.getElementById('scoreDisplay').innerText = `${score} / ${total}`;
-        
-        const percentage = Math.round((score / total) * 100);
-        document.getElementById('percentageDisplay').innerText = `${percentage}% Accuracy`;
-        
-        setTimeout(() => {
-            document.getElementById('scoreBar').style.width = `${percentage}%`;
-            if(percentage > 75) document.getElementById('scoreBar').classList.replace('bg-purple-500', 'bg-green-500');
-            if(percentage < 40) document.getElementById('scoreBar').classList.replace('bg-purple-500', 'bg-red-500');
-        }, 300);
-    }
+        document.getElementById('scoreDisplay').innerText = `${score} / ${currentActiveTest.totalQuestions}`;
+    };
 </script>
 </body>
 </html>
-                
