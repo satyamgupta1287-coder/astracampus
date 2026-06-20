@@ -82,7 +82,6 @@
             <button onclick="window.location.href='fees.html'" class="bg-teal-50 p-3 rounded-2xl flex flex-col items-center border border-teal-100 hover:bg-teal-100 transition">
                 <i class="fas fa-wallet text-teal-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Fees</span>
             </button>
-            
         </div>
     </div>
 
@@ -123,42 +122,21 @@
         </div>
     </div>
 
-    <div class="px-4 mt-8 mb-6">
-        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Support & Help</h2>
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="window.location.href='doubts.html'" class="bg-white p-3 rounded-2xl border border-gray-200 flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-sm">
-                <i class="fas fa-question-circle text-blue-500"></i><span class="text-xs font-bold text-gray-700">Ask Doubts</span>
-            </button>
-            <button onclick="window.location.href='support.html'" class="bg-white p-3 rounded-2xl border border-gray-200 flex items-center justify-center gap-2 hover:bg-green-50 transition shadow-sm">
-                <i class="fas fa-headset text-green-500"></i><span class="text-xs font-bold text-gray-700">Contact Support</span>
-            </button>
-            <button onclick="window.location.href='gallery.html'" class="bg-pink-50 p-3 rounded-2xl flex flex-col items-center border border-pink-100 hover:bg-pink-100 transition">
-    <i class="fas fa-images text-pink-500 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Gallery</span>
-</button>
-
-        </div>
-    </div>
-
     <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center p-3 z-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
         <button class="flex flex-col items-center text-blue-600">
-            <i class="fas fa-home text-lg mb-1"></i>
-            <span class="text-[9px] font-bold">Home</span>
+            <i class="fas fa-home text-lg mb-1"></i><span class="text-[9px] font-bold">Home</span>
         </button>
         <button onclick="window.location.href='live-classes.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-play-circle text-lg mb-1"></i>
-            <span class="text-[9px] font-bold">Classes</span>
+            <i class="fas fa-play-circle text-lg mb-1"></i><span class="text-[9px] font-bold">Classes</span>
         </button>
         <button onclick="window.location.href='tests.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-edit text-lg mb-1"></i>
-            <span class="text-[9px] font-bold">Tests</span>
+            <i class="fas fa-edit text-lg mb-1"></i><span class="text-[9px] font-bold">Tests</span>
         </button>
         <button onclick="window.location.href='notifications.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-bell text-lg mb-1"></i>
-            <span class="text-[9px] font-bold">Notices</span>
+            <i class="fas fa-bell text-lg mb-1"></i><span class="text-[9px] font-bold">Notices</span>
         </button>
         <button onclick="window.location.href='profile.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-user text-lg mb-1"></i>
-            <span class="text-[9px] font-bold">Profile</span>
+            <i class="fas fa-user text-lg mb-1"></i><span class="text-[9px] font-bold">Profile</span>
         </button>
     </div>
 
@@ -166,173 +144,110 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { doc, getDoc, collection, query, where, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { doc, getDoc, collection, query, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    // Set Greeting based on real time
     const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good Morning,' : (hour < 18 ? 'Good Afternoon,' : 'Good Evening,');
-    document.getElementById('greetingMsg').innerText = greeting;
+    document.getElementById('greetingMsg').innerText = hour < 12 ? 'Good Morning,' : (hour < 18 ? 'Good Afternoon,' : 'Good Evening,');
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // Fetch the Real User Profile Data
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 
-                // 1. Populating Real Profile Info
+                // Profile Setup
                 document.getElementById('studentName').innerText = userData.name || userData.firstName || 'Student';
                 document.getElementById('studentId').innerText = userData.studentId || userData.admissionNo || 'N/A';
-                
-                let studentClass = userData.class || '';
-                let clsText = studentClass ? `Class ${studentClass}` : 'Unassigned';
+                let clsText = userData.class ? `Class ${userData.class}` : 'Unassigned';
                 let secText = userData.section ? ` ${userData.section}` : '';
                 document.getElementById('batchName').innerText = clsText + secText;
 
-                if(userData.photoBase64) {
-                    document.getElementById('profilePhoto').src = userData.photoBase64;
+                if(userData.photoUrl || userData.photoBase64) {
+                    document.getElementById('profilePhoto').src = userData.photoUrl || userData.photoBase64;
                 }
 
-                // 2. REAL-TIME FEE CALCULATION
+                // Fees
                 const totalFee = userData.totalFee || 0;
                 const paidFee = userData.paidFee || 0;
                 const pendingFee = totalFee - paidFee;
+                document.getElementById('statFees').innerText = "₹" + pendingFee;
 
-                const feeElement = document.getElementById('statFees');
-                feeElement.innerText = "₹" + pendingFee;
-                
-                if (pendingFee > 0) {
-                    feeElement.className = "text-lg font-bold text-red-600";
-                } else if (totalFee > 0 && pendingFee === 0) {
-                    feeElement.className = "text-lg font-bold text-green-600";
-                }
+                // JS Filtering Setup (Fixes Firebase Index Error)
+                const targetClassStr = String(userData.class || "");
 
-                // 3. REAL-TIME ATTENDANCE CALCULATION
-                const attQuery = query(collection(db, "attendance"), where("studentId", "==", user.uid));
-                onSnapshot(attQuery, (snapshot) => {
-                    const totalDays = snapshot.size;
-                    let presentDays = 0;
+                // A. Assignments Loader Fix
+                const assignQuery = query(collection(db, "assignments"), orderBy("createdAt", "desc"));
+                onSnapshot(assignQuery, (snapshot) => {
+                    const container = document.getElementById('assignmentsContainer');
+                    const filteredAssigns = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
                     
-                    if (totalDays === 0) {
-                        document.getElementById('statAttendance').innerText = "N/A";
-                        return;
-                    }
+                    document.getElementById('statAssignments').innerText = filteredAssigns.length;
 
-                    snapshot.forEach((docSnap) => {
-                        if (docSnap.data().status === "Present") {
-                            presentDays++;
-                        }
-                    });
-
-                    const attPercentage = Math.round((presentDays / totalDays) * 100);
-                    const attElement = document.getElementById('statAttendance');
-                    attElement.innerText = attPercentage + "%";
-                    
-                    if(attPercentage >= 75) {
-                        attElement.className = "text-lg font-bold text-green-600";
-                    } else if (attPercentage >= 50) {
-                        attElement.className = "text-lg font-bold text-yellow-500";
+                    if(filteredAssigns.length === 0) {
+                        container.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No pending assignments! 🎉</p></div>`;
                     } else {
-                        attElement.className = "text-lg font-bold text-red-600";
+                        container.innerHTML = "";
+                        filteredAssigns.slice(0, 2).forEach((docSnap) => { // Show max 2
+                            const data = docSnap.data();
+                            const dlUrl = data.fileUrl ? (data.fileUrl.includes('/upload/') ? data.fileUrl.replace('/upload/', '/upload/fl_attachment/') : data.fileUrl) : "#";
+                            
+                            container.innerHTML += `
+                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 relative overflow-hidden text-left">
+                                    <div class="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">New</div>
+                                    <h4 class="font-bold text-gray-800 text-sm truncate pr-10">${data.title}</h4>
+                                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">${data.description || 'Subject related task'}</p>
+                                    <a href="${dlUrl}" target="_blank" class="mt-3 text-xs text-blue-600 font-bold border border-blue-200 px-3 py-1.5 rounded-lg w-full text-center block hover:bg-blue-50 transition">Download Details</a>
+                                </div>
+                            `;
+                        });
                     }
                 });
 
-                // 4. Fetching Real Data (Class Specific)
-                if(studentClass) {
-                    
-                    // A. Fetching Assignments
-                    const assignQuery = query(collection(db, "assignments"), where("targetClass", "==", studentClass), orderBy("createdAt", "desc"));
-                    onSnapshot(assignQuery, (snapshot) => {
-                        document.getElementById('statAssignments').innerText = snapshot.size;
-                        const container = document.getElementById('assignmentsContainer');
-                        
-                        if(snapshot.empty) {
-                            container.innerHTML = `
-                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                                    <p class="text-xs text-gray-400 py-2">No pending assignments! 🎉</p>
-                                </div>`;
-                        } else {
-                            container.innerHTML = "";
-                            let count = 0;
-                            snapshot.forEach((docSnap) => {
-                                if(count >= 2) return;
-                                const data = docSnap.data();
-                                container.innerHTML += `
-                                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 relative overflow-hidden">
-                                        <div class="absolute top-0 right-0 bg-blue-100 text-blue-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">Due: ${data.dueDate || 'N/A'}</div>
-                                        <h4 class="font-bold text-gray-800 text-sm truncate pr-16">${data.title}</h4>
-                                        <p class="text-xs text-gray-500 mt-1">Subject: ${data.subject}</p>
-                                        <a href="${data.fileUrl}" target="_blank" class="mt-3 text-xs text-blue-600 font-bold border border-blue-200 px-3 py-1.5 rounded-lg w-full text-center block hover:bg-blue-50 transition">View / Download</a>
-                                    </div>
-                                `;
-                                count++;
-                            });
-                        }
-                    });
+                // B. Live Classes Loader Fix
+                const classQuery = query(collection(db, "live_classes"), orderBy("createdAt", "desc"));
+                onSnapshot(classQuery, (snapshot) => {
+                    const scheduleContainer = document.getElementById('scheduleContainer');
+                    const filteredClasses = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
 
-                    // B. Fetching Announcements (Notices)
-                    const noticeQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
-                    onSnapshot(noticeQuery, (snapshot) => {
-                        const noticeContainer = document.getElementById('announcementContainer');
-                        if(!snapshot.empty) {
-                            const data = snapshot.docs[0].data();
-                            noticeContainer.innerHTML = `
-                                <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-start gap-3">
-                                    <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 flex-shrink-0">
-                                        <i class="fas fa-bullhorn"></i>
+                    if (filteredClasses.length === 0) {
+                        scheduleContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No classes scheduled for today.</p></div>`;
+                    } else {
+                        scheduleContainer.innerHTML = "";
+                        filteredClasses.forEach((docSnap) => {
+                            const data = docSnap.data();
+                            scheduleContainer.innerHTML += `
+                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 flex items-center gap-4 text-left">
+                                    <div class="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shadow-inner"><i class="fas fa-video text-xl"></i></div>
+                                    <div class="flex-grow">
+                                        <h4 class="font-bold text-gray-800 text-sm">${data.subject || data.title || 'Live Class'}</h4>
+                                        <p class="text-[10px] text-gray-500 font-bold mb-1"><i class="far fa-clock mr-1"></i>Tap to join</p>
                                     </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-800 text-sm">${data.title}</h4>
-                                        <p class="text-xs text-gray-600 mt-1">${data.description}</p>
-                                        <p class="text-[9px] text-gray-400 mt-2">${new Date(data.createdAt?.toDate()).toLocaleDateString()}</p>
-                                    </div>
+                                    <a href="${data.meetingLink || '#'}" target="_blank" class="bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition"><i class="fas fa-play ml-0.5"></i></a>
                                 </div>
                             `;
-                        }
-                    });
+                        });
+                    }
+                });
 
-                    // C. Fetching Total Upcoming Tests Count
-                    const testQuery = query(collection(db, "tests"), where("targetClass", "==", studentClass));
-                    onSnapshot(testQuery, (snapshot) => {
-                        document.getElementById('statTests').innerText = snapshot.size;
-                    });
+                // C. Notices Load
+                const noticeQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
+                onSnapshot(noticeQuery, (snapshot) => {
+                    const noticeContainer = document.getElementById('announcementContainer');
+                    if(!snapshot.empty) {
+                        const data = snapshot.docs[0].data();
+                        noticeContainer.innerHTML = `
+                            <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-start gap-3">
+                                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 flex-shrink-0"><i class="fas fa-bullhorn"></i></div>
+                                <div class="text-left">
+                                    <h4 class="font-bold text-gray-800 text-sm">${data.title}</h4>
+                                    <p class="text-xs text-gray-600 mt-1">${data.description}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
 
-                    // D. Fetching Live Classes / Today's Schedule
-                    const classQuery = query(collection(db, "live_classes"), where("targetClass", "==", studentClass), orderBy("createdAt", "desc"));
-                    onSnapshot(classQuery, (snapshot) => {
-                        const scheduleContainer = document.getElementById('scheduleContainer');
-                        if (snapshot.empty) {
-                            scheduleContainer.innerHTML = `
-                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                                    <p class="text-xs text-gray-400 py-2">No classes scheduled for today.</p>
-                                </div>`;
-                        } else {
-                            scheduleContainer.innerHTML = "";
-                            snapshot.forEach((docSnap) => {
-                                const data = docSnap.data();
-                                scheduleContainer.innerHTML += `
-                                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 flex items-center gap-4 text-left">
-                                        <div class="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner">
-                                            <i class="fas fa-video text-xl"></i>
-                                        </div>
-                                        <div class="flex-grow">
-                                            <h4 class="font-bold text-gray-800 text-sm">${data.subject}</h4>
-                                            <p class="text-[10px] text-gray-500 font-bold mb-1"><i class="far fa-user text-gray-400 mr-1"></i>${data.teacherName}</p>
-                                            <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded"><i class="far fa-clock mr-1"></i>${data.time}</span>
-                                        </div>
-                                        <a href="${data.meetingLink}" target="_blank" class="bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition flex-shrink-0">
-                                            <i class="fas fa-play ml-0.5"></i>
-                                        </a>
-                                    </div>
-                                `;
-                            });
-                        }
-                    });
-
-                } else {
-                    document.getElementById('assignmentsContainer').innerHTML = `<p class="text-xs text-red-400 py-2 text-center">Class not assigned. Cannot fetch data.</p>`;
-                }
             } else {
                 window.location.href = "../index.html"; 
             }
@@ -341,7 +256,6 @@
         }
     });
 
-    // Logout function
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         if(confirm("Are you sure you want to logout?")) {
             await signOut(auth);
