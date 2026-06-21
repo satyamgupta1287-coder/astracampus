@@ -1,0 +1,28 @@
+Phase 1: Environment Setup (Pehli Baar)
+
+​Termux open karo aur ye commands line-by-line chalayein taaki phone coding ke liye ready ho jaye
+.
+# 1. Update and Upgrade
+pkg update && pkg upgrade -y
+
+# 2. Grant Storage Access (Permission accept karna pop-up aane par)
+termux-setup-storage
+
+# 3. Install Node.js
+pkg install nodejs -y
+
+# 4. Folder Banayein
+mkdir -p ~/storage/shared/SchoolAdmin
+cd ~/storage/shared/SchoolAdmin
+
+Phase 2: Firebase Backend Setup
+​Hum yahan project ko initialize karenge aur zaroori files install karenge.
+
+# 1. Init NPM
+npm init -y
+
+# 2. Firebase install karein
+npm install firebase
+
+Phase 3: The "Master Founder Script"
+   Download Script From This Folder
