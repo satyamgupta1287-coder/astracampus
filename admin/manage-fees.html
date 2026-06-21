@@ -48,8 +48,7 @@
             <span id="studentCount" class="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded">0 Students</span>
         </div>
         
-        <div id="studentList" class="space-y-4">
-            </div>
+        <div id="studentList" class="space-y-4"></div>
     </div>
 </div>
 
@@ -86,20 +85,42 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, query, where, onSnapshot, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    // 1. Fetch Students & Fee Records
+    let adminSchoolId = null;
+
+    // 1. Auth & Get School ID
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const adminDoc = await getDoc(doc(db, "users", user.uid));
+            if (adminDoc.exists()) {
+                adminSchoolId = adminDoc.data().schoolId;
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
+
+    // 2. Fetch Students & Fee Records (FILTERED)
     window.fetchFeeRecords = () => {
         const selectedClass = document.getElementById('classSelector').value;
         const listContainer = document.getElementById('studentList');
         const section = document.getElementById('studentsSection');
 
         if(!selectedClass) return alert("Please select a class!");
+        if(!adminSchoolId) return alert("School ID missing. Please refresh.");
 
         section.classList.remove('hidden');
         listContainer.innerHTML = `<p class="text-center text-sm text-gray-400 py-4"><i class="fas fa-spinner fa-spin mr-2"></i> Loading data...</p>`;
 
-        const q = query(collection(db, "users"), where("class", "==", selectedClass));
+        // FILTER ADDED HERE
+        const q = query(
+            collection(db, "users"), 
+            where("class", "==", selectedClass),
+            where("role", "==", "student"),
+            where("schoolId", "==", adminSchoolId)
+        );
         
         onSnapshot(q, (snapshot) => {
             document.getElementById('studentCount').innerText = `${snapshot.size} Students`;
@@ -114,12 +135,10 @@
                 const student = { id: docSnap.id, ...docSnap.data() };
                 const name = student.name || student.firstName || "Unknown";
                 
-                // Get fee details (Default to 0 if not set)
                 const totalFee = student.totalFee || 0;
                 const paidFee = student.paidFee || 0;
                 const pendingFee = totalFee - paidFee;
 
-                // Color code based on pending fee
                 const statusColor = pendingFee <= 0 ? "text-green-500" : "text-red-500";
                 const bgStatus = pendingFee <= 0 ? "bg-green-50" : "bg-red-50";
 
@@ -155,44 +174,31 @@
         });
     };
 
-    // 2. Modal Controls
     window.openModal = (uid, name, id, total, paid) => {
         document.getElementById('modalUid').value = uid;
         document.getElementById('modalStudentName').innerText = name;
         document.getElementById('modalStudentId').innerText = `ID: ${id || 'N/A'}`;
         document.getElementById('modalTotalFee').value = total === 0 ? '' : total;
         document.getElementById('modalPaidFee').value = paid === 0 ? '' : paid;
-        
         document.getElementById('feeModal').classList.remove('hidden');
     };
 
-    window.closeModal = () => {
-        document.getElementById('feeModal').classList.add('hidden');
-    };
+    window.closeModal = () => document.getElementById('feeModal').classList.add('hidden');
 
-    // 3. Update Fee in Firestore
     window.updateFee = async () => {
         const uid = document.getElementById('modalUid').value;
         const totalFee = Number(document.getElementById('modalTotalFee').value) || 0;
         const paidFee = Number(document.getElementById('modalPaidFee').value) || 0;
         const saveBtn = document.getElementById('saveFeeBtn');
 
-        if(paidFee > totalFee) {
-            return alert("Paid amount cannot be greater than Total Fee!");
-        }
+        if(paidFee > totalFee) return alert("Paid amount cannot be greater than Total Fee!");
 
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
 
         try {
-            // Updating the student's main profile in Firestore
-            await updateDoc(doc(db, "users", uid), {
-                totalFee: totalFee,
-                paidFee: paidFee
-            });
-
+            await updateDoc(doc(db, "users", uid), { totalFee: totalFee, paidFee: paidFee });
             closeModal();
-            // Data will auto-refresh because of onSnapshot!
         } catch (error) {
             alert("Error updating fee: " + error.message);
         } finally {
