@@ -19,7 +19,7 @@
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h1 class="text-2xl font-bold">Admin Dashboard</h1>
-                <p class="text-sm text-white/80">Welcome back, Admin</p>
+                <p class="text-sm text-white/80" id="adminWelcomeMsg">Welcome back, Admin</p>
             </div>
             <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl backdrop-blur-sm transition">
                 <i class="fas fa-sign-out-alt"></i>
@@ -34,8 +34,8 @@
                 <h2 class="text-3xl font-bold text-violet-600" id="totalStudentsCount">0</h2>
             </div>
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Total Teachers</p>
-                <h2 class="text-3xl font-bold text-fuchsia-600">1</h2> 
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Total Staff</p>
+                <h2 class="text-3xl font-bold text-fuchsia-600" id="totalTeachersCount">0</h2> 
             </div>
         </div>
     </div>
@@ -45,6 +45,11 @@
         
         <div class="grid grid-cols-2 gap-3">
             
+            <button onclick="window.location.href='manage-staff.html'" class="bg-fuchsia-50 p-4 rounded-2xl flex flex-col items-center border border-fuchsia-100 hover:bg-fuchsia-100 transition shadow-sm">
+                <i class="fas fa-user-tie text-fuchsia-600 text-2xl mb-2"></i>
+                <span class="text-xs font-bold text-gray-700">Staff & Teachers</span>
+            </button>
+
             <button onclick="window.location.href='manage-students.html'" class="bg-blue-50 p-4 rounded-2xl flex flex-col items-center border border-blue-100 hover:bg-blue-100 transition shadow-sm">
                 <i class="fas fa-users-cog text-blue-600 text-2xl mb-2"></i>
                 <span class="text-xs font-bold text-gray-700">Students</span>
@@ -123,8 +128,11 @@
                     const adminData = adminSnap.data();
                     const adminSchoolId = adminData.schoolId; 
                     
-                    // Fetch students matching this school code ONLY
+                    document.getElementById('adminWelcomeMsg').innerText = `School Code: ${adminSchoolId}`;
+
+                    // Fetch live counters for this specific school ONLY
                     fetchStudentCount(adminSchoolId);
+                    fetchStaffCount(adminSchoolId);
                 } else {
                     console.log("Admin data not found in users collection.");
                 }
@@ -142,7 +150,7 @@
         }
     });
 
-    // 3. Fetch Real Student Count (Multi-Tenant Filter Applied)
+    // 3. Fetch Real Student Count 
     function fetchStudentCount(adminSchoolId) {
         if(!adminSchoolId) return;
 
@@ -154,6 +162,28 @@
         
         onSnapshot(q, (snapshot) => {
             document.getElementById('totalStudentsCount').innerText = snapshot.size;
+        });
+    }
+
+    // 4. Fetch Real Staff/Teacher Count
+    function fetchStaffCount(adminSchoolId) {
+        if(!adminSchoolId) return;
+
+        const q = query(
+            collection(db, "users"), 
+            where("schoolId", "==", adminSchoolId)
+        );
+        
+        onSnapshot(q, (snapshot) => {
+            let staffCount = 0;
+            snapshot.forEach((docSnap) => {
+                const role = docSnap.data().role;
+                // Sirf unko gino jo student nahi hain (Staff, Admin, Teacher)
+                if(role === "teacher" || role === "staff" || role === "admin") {
+                    staffCount++;
+                }
+            });
+            document.getElementById('totalTeachersCount').innerText = staffCount;
         });
     }
 </script>
