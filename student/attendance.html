@@ -54,88 +54,78 @@
             </div>
         </div>
     </div>
-
-    <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center p-3 z-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-        <button onclick="window.location.href='dashboard.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-home text-lg mb-1"></i><span class="text-[9px] font-bold">Home</span>
-        </button>
-        <button class="flex flex-col items-center text-blue-600">
-            <i class="fas fa-check-circle text-lg mb-1"></i><span class="text-[9px] font-bold">Attendance</span>
-        </button>
-        <button onclick="window.location.href='tests.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-edit text-lg mb-1"></i><span class="text-[9px] font-bold">Tests</span>
-        </button>
-        <button onclick="window.location.href='profile.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-user text-lg mb-1"></i><span class="text-[9px] font-bold">Profile</span>
-        </button>
-    </div>
-
 </div>
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // NAYA LOGIC: Data Ab UID se nahi, sidha Email se match karega!
-            const q = query(collection(db, "attendance"), where("studentEmail", "==", user.email));
-            
-            onSnapshot(q, (snapshot) => {
-                let present = 0, absent = 0;
-                let records = [];
-                const list = document.getElementById('attendanceList');
-                list.innerHTML = "";
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if(userDoc.exists()) {
+                const schoolId = userDoc.data().schoolId;
 
-                if(snapshot.empty) {
-                    list.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center border border-gray-100 shadow-sm"><p class="text-sm text-gray-400 font-medium">No attendance records found yet.</p></div>`;
-                    return;
-                }
-
-                // Push to array to sort locally by date
-                snapshot.forEach((doc) => records.push(doc.data()));
-                records.sort((a, b) => new Date(b.date) - new Date(a.date)); // Latest date top par
-
-                records.forEach((data) => {
-                    if(data.status === "present") present++; else absent++;
-                    
-                    // Date Format Logic (e.g., "12 Oct 2026")
-                    const dateObj = new Date(data.date);
-                    const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
-                    const bgClass = data.status === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100';
-                    const icon = data.status === 'present' ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
-                    
-                    list.innerHTML += `
-                        <div class="flex justify-between items-center p-4 border border-gray-100 bg-white shadow-sm rounded-2xl mb-2">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full flex justify-center items-center font-bold border ${bgClass}">
-                                    ${icon}
-                                </div>
-                                <span class="text-sm font-bold text-gray-800">${formattedDate}</span>
-                            </div>
-                            <span class="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${bgClass}">
-                                ${data.status}
-                            </span>
-                        </div>
-                    `;
-                });
-
-                // Update UI Stats
-                const total = present + absent;
-                const percentage = total === 0 ? 0 : Math.round((present / total) * 100);
-
-                document.getElementById('presentCount').innerText = present;
-                document.getElementById('absentCount').innerText = absent;
-                document.getElementById('attPercentage').innerText = percentage + "%";
+                // FILTER BY SCHOOL & EMAIL
+                const q = query(
+                    collection(db, "attendance"), 
+                    where("studentEmail", "==", user.email),
+                    where("schoolId", "==", schoolId)
+                );
                 
-                setTimeout(() => {
-                    document.getElementById('attProgressBar').style.width = percentage + "%";
-                    if(percentage < 50) document.getElementById('attProgressBar').classList.replace('bg-blue-500', 'bg-red-500');
-                    else if(percentage >= 75) document.getElementById('attProgressBar').classList.replace('bg-blue-500', 'bg-green-500');
-                }, 300);
-            });
+                onSnapshot(q, (snapshot) => {
+                    let present = 0, absent = 0;
+                    let records = [];
+                    const list = document.getElementById('attendanceList');
+                    list.innerHTML = "";
+
+                    if(snapshot.empty) {
+                        list.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center border border-gray-100 shadow-sm"><p class="text-sm text-gray-400 font-medium">No attendance records found yet.</p></div>`;
+                        return;
+                    }
+
+                    snapshot.forEach((docSnap) => records.push(docSnap.data()));
+                    records.sort((a, b) => new Date(b.date) - new Date(a.date)); 
+
+                    records.forEach((data) => {
+                        if(data.status === "present") present++; else absent++;
+                        
+                        const dateObj = new Date(data.date);
+                        const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                        const bgClass = data.status === 'present' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100';
+                        const icon = data.status === 'present' ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
+                        
+                        list.innerHTML += `
+                            <div class="flex justify-between items-center p-4 border border-gray-100 bg-white shadow-sm rounded-2xl mb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full flex justify-center items-center font-bold border ${bgClass}">
+                                        ${icon}
+                                    </div>
+                                    <span class="text-sm font-bold text-gray-800">${formattedDate}</span>
+                                </div>
+                                <span class="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${bgClass}">
+                                    ${data.status}
+                                </span>
+                            </div>
+                        `;
+                    });
+
+                    const total = present + absent;
+                    const percentage = total === 0 ? 0 : Math.round((present / total) * 100);
+
+                    document.getElementById('presentCount').innerText = present;
+                    document.getElementById('absentCount').innerText = absent;
+                    document.getElementById('attPercentage').innerText = percentage + "%";
+                    
+                    setTimeout(() => {
+                        document.getElementById('attProgressBar').style.width = percentage + "%";
+                        if(percentage < 50) document.getElementById('attProgressBar').classList.replace('bg-blue-500', 'bg-red-500');
+                        else if(percentage >= 75) document.getElementById('attProgressBar').classList.replace('bg-blue-500', 'bg-green-500');
+                    }, 300);
+                });
+            }
         } else {
             window.location.href = "../index.html";
         }
