@@ -3,158 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student App Dashboard</title>
+    <title>Student Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        :root{
+            --ink:#0F1729;
+            --ink-soft:#1B2640;
+            --paper:#FDFBF7;
+            --accent:#4F46E5;
+            --accent-soft:#EEF0FF;
+            --amber:#D97706;
+            --amber-soft:#FEF3E2;
+            --line:#E7E2D8;
+        }
+        *{font-family:'Inter',sans-serif;}
+        .font-display{font-family:'Space Grotesk',sans-serif;}
+        body{background:var(--paper);}
+        .no-scrollbar::-webkit-scrollbar{display:none;}
+        .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+
+        .id-card{
+            background:linear-gradient(135deg,var(--ink) 0%, var(--ink-soft) 55%, #2A3658 100%);
+            position:relative;
+            overflow:hidden;
+        }
+        .id-card::before{
+            content:'';
+            position:absolute;
+            top:-40%; right:-30%;
+            width:280px; height:280px;
+            background:radial-gradient(circle, rgba(79,70,229,0.35) 0%, transparent 70%);
+            pointer-events:none;
+        }
+        .id-card::after{
+            content:'';
+            position:absolute;
+            inset:0;
+            background-image:repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 14px);
+            pointer-events:none;
+        }
+        .perforation{
+            position:relative;
+        }
+        .perforation::before{
+            content:'';
+            position:absolute;
+            top:0; left:0; right:0;
+            height:1px;
+            background-image:radial-gradient(circle, #D8D2C4 1.5px, transparent 1.5px);
+            background-size:10px 1px;
+            background-repeat:repeat-x;
+        }
+
+        .stat-strip{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+        }
+        .stat-strip > div:not(:last-child){
+            border-right:1px solid var(--line);
+        }
+
+        .rail-dot{
+            width:10px;height:10px;border-radius:50%;
+            background:var(--accent);
+            box-shadow:0 0 0 4px var(--accent-soft);
+        }
+        .rail-line{
+            width:2px;
+            background:var(--line);
+        }
+
+        .tile{
+            transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+        }
+        .tile:active{transform:scale(0.96);}
+
+        .eyebrow{
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.12em;
+            text-transform:uppercase;
+            color:#9A8F7A;
+        }
+
+        .nav-active{color:var(--accent);}
+        .nav-active i{transform:translateY(-1px);}
+
+        ::selection{background:var(--accent-soft);}
     </style>
 </head>
-<body class="bg-gray-50 pb-20 font-sans">
+<body class="pb-24">
 
-<div class="max-w-md mx-auto bg-gray-50 min-h-screen shadow-sm relative">
-    
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-b-[2.5rem] p-6 text-white text-center shadow-lg relative pb-16">
-        <div class="flex justify-between items-center mb-4">
-            <div class="text-left">
-                <p class="text-blue-200 text-xs font-bold uppercase tracking-wider" id="greetingMsg">Good Morning,</p>
-                <h1 class="text-2xl font-bold truncate w-48" id="studentName">Loading...</h1>
+<div class="max-w-md mx-auto min-h-screen relative" style="background:var(--paper);">
+
+    <!-- ===== ID-CARD HEADER ===== -->
+    <div class="id-card px-5 pt-6 pb-7 rounded-b-[28px] text-white relative">
+        <div class="flex justify-between items-start relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-white/15 bg-white/10 flex-shrink-0">
+                    <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-full h-full object-cover">
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-300" id="greetingMsg">Good Morning</p>
+                    <h1 class="font-display font-semibold text-xl leading-tight truncate max-w-[160px]" id="studentName">Loading&hellip;</h1>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                        <span class="font-mono tracking-wide text-slate-300" id="studentId">&middot;&middot;&middot;</span>
+                        <span class="mx-1 text-slate-600">/</span>
+                        <span id="batchName">Loading&hellip;</span>
+                    </p>
+                </div>
             </div>
-            <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 p-2 rounded-xl backdrop-blur-sm transition">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
-        </div>
-        <p class="text-sm bg-white/10 inline-block px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/20">
-            ID: <span id="studentId" class="font-bold">...</span> | <span id="batchName">Loading...</span>
-        </p>
-
-        <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
-            <div class="w-20 h-20 bg-white rounded-full p-1 shadow-lg">
-                <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-full h-full rounded-full object-cover border border-gray-100">
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-14 px-4">
-        <div class="flex gap-3 overflow-x-auto no-scrollbar py-2">
-            <div onclick="window.location.href='attendance.html'" class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-all">
-                <i class="fas fa-chart-pie text-blue-500 text-2xl mb-2"></i>
-                <h3 class="text-lg font-bold text-gray-800" id="statAttendance">N/A</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Attendance</p>
-            </div>
-            
-            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <i class="fas fa-tasks text-orange-500 text-2xl mb-2"></i>
-                <h3 class="text-lg font-bold text-gray-800" id="statAssignments">0</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Pending HW</p>
-            </div>
-            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <i class="fas fa-file-signature text-purple-500 text-2xl mb-2"></i>
-                <h3 class="text-lg font-bold text-gray-800" id="statTests">0</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Upc. Tests</p>
-            </div>
-            <div class="min-w-[120px] bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                <i class="fas fa-rupee-sign text-red-500 text-2xl mb-2"></i>
-                <h3 class="text-lg font-bold text-gray-800" id="statFees">₹0</h3>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Pending Fee</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="px-4 mt-6">
-        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Quick Access</h2>
-        <div class="grid grid-cols-4 gap-3">
-            <button onclick="window.location.href='live-classes.html'" class="bg-red-50 p-3 rounded-2xl flex flex-col items-center border border-red-100 hover:bg-red-100 transition">
-                <i class="fas fa-video text-red-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Live Class</span>
-            </button>
-            <button onclick="window.location.href='materials.html'" class="bg-blue-50 p-3 rounded-2xl flex flex-col items-center border border-blue-100 hover:bg-blue-100 transition">
-                <i class="fas fa-book-open text-blue-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Materials</span>
-            </button>
-            <button onclick="window.location.href='assignments.html'" class="bg-green-50 p-3 rounded-2xl flex flex-col items-center border border-green-100 hover:bg-green-100 transition">
-                <i class="fas fa-clipboard-list text-green-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Assignments</span>
-            </button>
-            <button onclick="window.location.href='tests.html'" class="bg-purple-50 p-3 rounded-2xl flex flex-col items-center border border-purple-100 hover:bg-purple-100 transition">
-                <i class="fas fa-laptop-code text-purple-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Mock Tests</span>
-            </button>
-            <button onclick="window.location.href='results.html'" class="bg-orange-50 p-3 rounded-2xl flex flex-col items-center border border-orange-100 hover:bg-orange-100 transition">
-                <i class="fas fa-trophy text-orange-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Results</span>
-            </button>
-            <button onclick="window.location.href='fees.html'" class="bg-teal-50 p-3 rounded-2xl flex flex-col items-center border border-teal-100 hover:bg-teal-100 transition">
-                <i class="fas fa-wallet text-teal-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Fees</span>
-            </button>
-            
-            <button onclick="window.location.href='gallery.html'" class="bg-pink-50 p-3 rounded-2xl flex flex-col items-center border border-pink-100 hover:bg-pink-100 transition col-span-2">
-                <i class="fas fa-images text-pink-500 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">School Gallery</span>
-            </button>
-
-            <button onclick="window.location.href='complaints.html'" class="bg-yellow-50 p-3 rounded-2xl flex flex-col items-center border border-yellow-100 hover:bg-yellow-100 transition">
-    <i class="fas fa-comment-dots text-yellow-600 mb-1 text-lg"></i>
-    <span class="text-[10px] font-bold text-gray-700">Complaint</span>
-            </button>
-
-            <button onclick="window.location.href='leave.html'" class="bg-green-50 p-3 rounded-2xl flex flex-col items-center border border-green-100 hover:bg-green-100 transition">
-    <i class="fas fa-calendar-check text-green-600 mb-1 text-lg"></i>
-    <span class="text-[10px] font-bold text-gray-700">Leave</span>
-</button>
-
-            <button onclick="window.location.href='timetable.html'" class="bg-indigo-50 p-3 rounded-2xl flex flex-col items-center border border-indigo-100 hover:bg-indigo-100 transition">
-    <i class="fas fa-calendar-alt text-indigo-600 mb-1 text-lg"></i>
-    <span class="text-[10px] font-bold text-gray-700">Timetable</span>
-            </button>
-
-            <button onclick="window.location.href='feedback.html'" class="bg-blue-50 p-3 rounded-2xl flex flex-col items-center border border-blue-100 hover:bg-blue-100 transition">
-    <i class="fas fa-comment-alt text-blue-600 mb-1 text-lg"></i>
-    <span class="text-[10px] font-bold text-gray-700">Feedback</span>
+            <button id="logoutBtn" aria-label="Log out" class="bg-white/10 hover:bg-white/20 active:scale-95 w-9 h-9 rounded-xl flex items-center justify-center transition shrink-0">
+                <i class="fas fa-arrow-right-from-bracket text-sm text-slate-200"></i>
             </button>
         </div>
     </div>
 
+    <!-- ===== STAT STRIP (signature element: boarding-pass style data strip) ===== -->
+    <div class="px-4 -mt-5 relative z-10">
+        <div class="bg-white rounded-2xl shadow-[0_8px_24px_-8px_rgba(15,23,41,0.18)] border border-[var(--line)] stat-strip overflow-hidden">
+            <div onclick="window.location.href='attendance.html'" class="p-3.5 flex flex-col items-center justify-center cursor-pointer active:bg-slate-50 transition">
+                <p class="eyebrow mb-1">Attendance</p>
+                <h3 class="font-display text-base font-bold text-slate-800" id="statAttendance">&mdash;</h3>
+            </div>
+            <div class="p-3.5 flex flex-col items-center justify-center">
+                <p class="eyebrow mb-1">Pending HW</p>
+                <h3 class="font-display text-base font-bold text-slate-800" id="statAssignments">0</h3>
+            </div>
+            <div class="p-3.5 flex flex-col items-center justify-center">
+                <p class="eyebrow mb-1">Upc. Tests</p>
+                <h3 class="font-display text-base font-bold text-slate-800" id="statTests">0</h3>
+            </div>
+            <div class="p-3.5 flex flex-col items-center justify-center">
+                <p class="eyebrow mb-1">Fee Due</p>
+                <h3 class="font-display text-base font-bold" id="statFees" style="color:var(--amber);">&#8377;0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== QUICK ACCESS ===== -->
+    <div class="px-4 mt-7">
+        <div class="flex items-baseline justify-between mb-3 px-0.5">
+            <h2 class="font-display text-[13px] font-semibold text-slate-800">Quick Access</h2>
+        </div>
+        <div class="grid grid-cols-4 gap-2.5">
+            <button onclick="window.location.href='live-classes.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#FEEAEA;">
+                    <i class="fas fa-video text-[13px]" style="color:#DC2626;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Live Class</span>
+            </button>
+            <button onclick="window.location.href='materials.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:var(--accent-soft);">
+                    <i class="fas fa-book-open text-[13px]" style="color:var(--accent);"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Materials</span>
+            </button>
+            <button onclick="window.location.href='assignments.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#E7F7EE;">
+                    <i class="fas fa-clipboard-list text-[13px]" style="color:#16A34A;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Assignments</span>
+            </button>
+            <button onclick="window.location.href='tests.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#F1ECFB;">
+                    <i class="fas fa-laptop-code text-[13px]" style="color:#7C3AED;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Mock Tests</span>
+            </button>
+            <button onclick="window.location.href='results.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:var(--amber-soft);">
+                    <i class="fas fa-trophy text-[13px]" style="color:var(--amber);"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Results</span>
+            </button>
+            <button onclick="window.location.href='fees.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#E3F6F2;">
+                    <i class="fas fa-wallet text-[13px]" style="color:#0D9488;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Fees</span>
+            </button>
+            <button onclick="window.location.href='gallery.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#FCE9F1;">
+                    <i class="fas fa-images text-[13px]" style="color:#DB2777;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Gallery</span>
+            </button>
+            <button onclick="window.location.href='complaints.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#FCF3D9;">
+                    <i class="fas fa-comment-dots text-[13px]" style="color:#CA8A04;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Complaint</span>
+            </button>
+            <button onclick="window.location.href='leave.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#E7F7EE;">
+                    <i class="fas fa-calendar-check text-[13px]" style="color:#16A34A;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Leave</span>
+            </button>
+            <button onclick="window.location.href='timetable.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#EAEAFB;">
+                    <i class="fas fa-calendar-alt text-[13px]" style="color:#4338CA;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Timetable</span>
+            </button>
+            <button onclick="window.location.href='feedback.html'" class="tile bg-white p-3 rounded-2xl flex flex-col items-center border border-[var(--line)] active:border-indigo-200">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5" style="background:#E1EFFD;">
+                    <i class="fas fa-comment-alt text-[13px]" style="color:#2563EB;"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 leading-tight text-center">Feedback</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TODAY'S SCHEDULE (timeline rail) ===== -->
     <div class="px-4 mt-8">
-        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Today's Schedule</h2>
-        <div id="scheduleContainer" class="space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <p class="text-xs text-gray-400 py-2">Loading classes...</p>
+        <div class="flex items-baseline justify-between mb-3 px-0.5">
+            <h2 class="font-display text-[13px] font-semibold text-slate-800">Today's Schedule</h2>
+        </div>
+        <div id="scheduleContainer" class="space-y-0">
+            <div class="bg-white p-4 rounded-2xl border border-[var(--line)] text-center">
+                <p class="text-xs text-slate-400 py-2">Loading classes&hellip;</p>
             </div>
         </div>
     </div>
 
-    <div class="px-4 mt-6">
-        <div class="flex justify-between items-end mb-3 px-1">
-            <h2 class="text-sm font-bold text-gray-800">Pending Assignments</h2>
-            <span onclick="window.location.href='assignments.html'" class="text-[10px] font-bold text-blue-600 cursor-pointer hover:underline">View All</span>
+    <!-- ===== PENDING ASSIGNMENTS ===== -->
+    <div class="px-4 mt-8">
+        <div class="flex items-baseline justify-between mb-3 px-0.5">
+            <h2 class="font-display text-[13px] font-semibold text-slate-800">Pending Assignments</h2>
+            <span onclick="window.location.href='assignments.html'" class="text-[10px] font-bold uppercase tracking-wide" style="color:var(--accent);cursor:pointer;">View all</span>
         </div>
         <div id="assignmentsContainer">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <p class="text-xs text-gray-400 py-2">Loading assignments...</p>
+            <div class="bg-white p-4 rounded-2xl border border-[var(--line)] text-center">
+                <p class="text-xs text-slate-400 py-2">Loading assignments&hellip;</p>
             </div>
         </div>
     </div>
 
-    <div class="px-4 mt-8">
-        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Latest Announcements</h2>
+    <!-- ===== ANNOUNCEMENTS ===== -->
+    <div class="px-4 mt-8 mb-4">
+        <div class="flex items-baseline justify-between mb-3 px-0.5">
+            <h2 class="font-display text-[13px] font-semibold text-slate-800">Latest Announcement</h2>
+        </div>
         <div id="announcementContainer">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <p class="text-xs text-gray-400 py-2">Loading announcements...</p>
+            <div class="bg-white p-4 rounded-2xl border border-[var(--line)] text-center">
+                <p class="text-xs text-slate-400 py-2">Loading announcements&hellip;</p>
             </div>
         </div>
     </div>
 
-    <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center p-3 z-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
-        <button class="flex flex-col items-center text-blue-600">
-            <i class="fas fa-home text-lg mb-1"></i><span class="text-[9px] font-bold">Home</span>
+    <!-- ===== BOTTOM NAV ===== -->
+    <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-sm border-t border-[var(--line)] flex justify-around items-center py-2.5 z-50">
+        <button class="nav-active flex flex-col items-center gap-1 px-3 py-1">
+            <i class="fas fa-house text-[15px]"></i><span class="text-[9px] font-bold">Home</span>
         </button>
-        <button onclick="window.location.href='live-classes.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-play-circle text-lg mb-1"></i><span class="text-[9px] font-bold">Classes</span>
+        <button onclick="window.location.href='live-classes.html'" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400 active:text-indigo-600 transition">
+            <i class="fas fa-circle-play text-[15px]"></i><span class="text-[9px] font-bold">Classes</span>
         </button>
-        <button onclick="window.location.href='tests.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-edit text-lg mb-1"></i><span class="text-[9px] font-bold">Tests</span>
+        <button onclick="window.location.href='tests.html'" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400 active:text-indigo-600 transition">
+            <i class="fas fa-pen-to-square text-[15px]"></i><span class="text-[9px] font-bold">Tests</span>
         </button>
-        <button onclick="window.location.href='notices.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-bell text-lg mb-1"></i><span class="text-[9px] font-bold">Notices</span>
+        <button onclick="window.location.href='notices.html'" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400 active:text-indigo-600 transition">
+            <i class="fas fa-bell text-[15px]"></i><span class="text-[9px] font-bold">Notices</span>
         </button>
-        <button onclick="window.location.href='profile.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
-            <i class="fas fa-user text-lg mb-1"></i><span class="text-[9px] font-bold">Profile</span>
+        <button onclick="window.location.href='profile.html'" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400 active:text-indigo-600 transition">
+            <i class="fas fa-user text-[15px]"></i><span class="text-[9px] font-bold">Profile</span>
         </button>
     </div>
 
@@ -167,7 +284,7 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const hour = new Date().getHours();
-    document.getElementById('greetingMsg').innerText = hour < 12 ? 'Good Morning,' : (hour < 18 ? 'Good Afternoon,' : 'Good Evening,');
+    document.getElementById('greetingMsg').innerText = hour < 12 ? 'Good Morning' : (hour < 18 ? 'Good Afternoon' : 'Good Evening');
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -207,7 +324,7 @@
                     document.getElementById('statAssignments').innerText = filteredAssigns.length;
 
                     if(filteredAssigns.length === 0) {
-                        container.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No pending assignments! 🎉</p></div>`;
+                        container.innerHTML = `<div class="bg-white p-4 rounded-2xl border border-[var(--line)] text-center"><p class="text-xs text-slate-400 py-2">No pending assignments — all caught up.</p></div>`;
                     } else {
                         container.innerHTML = "";
                         filteredAssigns.slice(0, 2).forEach((docSnap) => { 
@@ -215,11 +332,11 @@
                             const dlUrl = data.fileUrl ? (data.fileUrl.includes('/upload/') ? data.fileUrl.replace('/upload/', '/upload/fl_attachment/') : data.fileUrl) : "#";
                             
                             container.innerHTML += `
-                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 relative overflow-hidden text-left">
-                                    <div class="absolute top-0 right-0 bg-blue-50 text-blue-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg">New</div>
-                                    <h4 class="font-bold text-gray-800 text-sm truncate pr-10">${data.title}</h4>
-                                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">${data.description || 'Subject related task'}</p>
-                                    <a href="${dlUrl}" target="_blank" class="mt-3 text-xs text-blue-600 font-bold border border-blue-200 px-3 py-1.5 rounded-lg w-full text-center block hover:bg-blue-50 transition">Download Details</a>
+                                <div class="bg-white p-4 rounded-2xl border border-[var(--line)] mb-2.5 relative text-left">
+                                    <div class="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style="background:var(--accent-soft);color:var(--accent);">New</div>
+                                    <h4 class="font-display font-semibold text-slate-800 text-sm truncate pr-10">${data.title}</h4>
+                                    <p class="text-xs text-slate-500 mt-1 line-clamp-1">${data.description || 'Subject related task'}</p>
+                                    <a href="${dlUrl}" target="_blank" class="mt-3 text-[11px] font-bold px-3 py-2 rounded-xl w-full text-center block transition" style="color:var(--accent);background:var(--accent-soft);">Download details</a>
                                 </div>
                             `;
                         });
@@ -236,19 +353,30 @@
                     filteredClasses.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
 
                     if (filteredClasses.length === 0) {
-                        scheduleContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No classes scheduled for today.</p></div>`;
+                        scheduleContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl border border-[var(--line)] text-center"><p class="text-xs text-slate-400 py-2">No classes scheduled for today.</p></div>`;
                     } else {
                         scheduleContainer.innerHTML = "";
-                        filteredClasses.forEach((docSnap) => {
+                        filteredClasses.forEach((docSnap, idx) => {
                             const data = docSnap.data();
+                            const isLast = idx === filteredClasses.length - 1;
                             scheduleContainer.innerHTML += `
-                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-3 flex items-center gap-4 text-left">
-                                    <div class="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shadow-inner"><i class="fas fa-video text-xl"></i></div>
-                                    <div class="flex-grow">
-                                        <h4 class="font-bold text-gray-800 text-sm">${data.subject || data.title || 'Live Class'}</h4>
-                                        <p class="text-[10px] text-gray-500 font-bold mb-1"><i class="far fa-clock mr-1"></i>Tap to join</p>
+                                <div class="flex gap-3">
+                                    <div class="flex flex-col items-center pt-5">
+                                        <div class="rail-dot"></div>
+                                        ${isLast ? '' : '<div class="rail-line flex-grow" style="min-height:56px;"></div>'}
                                     </div>
-                                    <a href="${data.meetingLink || '#'}" target="_blank" class="bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition"><i class="fas fa-play ml-0.5"></i></a>
+                                    <div class="bg-white p-3.5 rounded-2xl border border-[var(--line)] mb-3 flex items-center gap-3 flex-grow text-left">
+                                        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#FEEAEA;">
+                                            <i class="fas fa-video text-sm" style="color:#DC2626;"></i>
+                                        </div>
+                                        <div class="flex-grow min-w-0">
+                                            <h4 class="font-display font-semibold text-slate-800 text-sm truncate">${data.subject || data.title || 'Live Class'}</h4>
+                                            <p class="text-[10px] text-slate-500 font-medium mt-0.5">Tap to join when live</p>
+                                        </div>
+                                        <a href="${data.meetingLink || '#'}" target="_blank" class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style="background:var(--accent);">
+                                            <i class="fas fa-play text-white text-xs ml-0.5"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             `;
                         });
@@ -260,18 +388,18 @@
                 onSnapshot(noticeQuery, (snapshot) => {
                     const noticeContainer = document.getElementById('announcementContainer');
                     if(snapshot.empty) {
-                        noticeContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No new announcements.</p></div>`;
+                        noticeContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl border border-[var(--line)] text-center"><p class="text-xs text-slate-400 py-2">No new announcements.</p></div>`;
                     } else {
                         let allNotices = [...snapshot.docs];
                         allNotices.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
                         
                         const data = allNotices.data();
                         noticeContainer.innerHTML = `
-                            <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-start gap-3">
-                                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 flex-shrink-0"><i class="fas fa-bullhorn"></i></div>
+                            <div class="p-4 rounded-2xl border flex items-start gap-3" style="background:var(--amber-soft);border-color:#F3D9A8;">
+                                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#FBE5C0;color:var(--amber);"><i class="fas fa-bullhorn text-sm"></i></div>
                                 <div class="text-left">
-                                    <h4 class="font-bold text-gray-800 text-sm">${data.title}</h4>
-                                    <p class="text-xs text-gray-600 mt-1">${data.description}</p>
+                                    <h4 class="font-display font-semibold text-slate-800 text-sm">${data.title}</h4>
+                                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">${data.description}</p>
                                 </div>
                             </div>
                         `;
@@ -295,11 +423,11 @@
                     
                     if(percentage !== "N/A") {
                         if(parseInt(percentage) >= 75) {
-                            statEl.className = "text-lg font-black text-green-600";
+                            statEl.style.color = "#16A34A";
                         } else if(parseInt(percentage) < 50) {
-                            statEl.className = "text-lg font-black text-red-600";
+                            statEl.style.color = "#DC2626";
                         } else {
-                            statEl.className = "text-lg font-black text-blue-600";
+                            statEl.style.color = "#4F46E5";
                         }
                     }
                 });
