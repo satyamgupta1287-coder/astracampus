@@ -108,13 +108,6 @@
     </div>
 
     <div class="px-4 mt-8">
-        <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Performance Analysis</h2>
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 text-center">
-            <p class="text-xs text-gray-400 py-4">Take your first test to see performance insights.</p>
-        </div>
-    </div>
-
-    <div class="px-4 mt-8">
         <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Latest Announcements</h2>
         <div id="announcementContainer">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
@@ -145,7 +138,6 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    // IMPORTANT: 'where' is added to imports here
     import { doc, getDoc, collection, query, where, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
@@ -157,6 +149,7 @@
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 const userData = userDoc.data();
+                const schoolId = userData.schoolId; // GET SCHOOL ID
                 
                 // Profile Setup
                 document.getElementById('studentName').innerText = userData.name || userData.firstName || 'Student';
@@ -175,11 +168,10 @@
                 const pendingFee = totalFee - paidFee;
                 document.getElementById('statFees').innerText = "₹" + pendingFee;
 
-                // JS Filtering Setup (Fixes Firebase Index Error)
                 const targetClassStr = String(userData.class || "");
 
-                // A. Assignments Loader Fix
-                const assignQuery = query(collection(db, "assignments"), orderBy("createdAt", "desc"));
+                // A. Assignments Loader Fix (FILTERED BY SCHOOL)
+                const assignQuery = query(collection(db, "assignments"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"));
                 onSnapshot(assignQuery, (snapshot) => {
                     const container = document.getElementById('assignmentsContainer');
                     const filteredAssigns = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
@@ -190,7 +182,7 @@
                         container.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No pending assignments! 🎉</p></div>`;
                     } else {
                         container.innerHTML = "";
-                        filteredAssigns.slice(0, 2).forEach((docSnap) => { // Show max 2
+                        filteredAssigns.slice(0, 2).forEach((docSnap) => { 
                             const data = docSnap.data();
                             const dlUrl = data.fileUrl ? (data.fileUrl.includes('/upload/') ? data.fileUrl.replace('/upload/', '/upload/fl_attachment/') : data.fileUrl) : "#";
                             
@@ -206,8 +198,8 @@
                     }
                 });
 
-                // B. Live Classes Loader Fix
-                const classQuery = query(collection(db, "live_classes"), orderBy("createdAt", "desc"));
+                // B. Live Classes Loader Fix (FILTERED BY SCHOOL)
+                const classQuery = query(collection(db, "live_classes"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"));
                 onSnapshot(classQuery, (snapshot) => {
                     const scheduleContainer = document.getElementById('scheduleContainer');
                     const filteredClasses = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
@@ -232,12 +224,12 @@
                     }
                 });
 
-                // C. Notices Load
-                const noticeQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
+                // C. Notices Load (FILTERED BY SCHOOL)
+                const noticeQuery = query(collection(db, "announcements"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"), limit(1));
                 onSnapshot(noticeQuery, (snapshot) => {
                     const noticeContainer = document.getElementById('announcementContainer');
                     if(!snapshot.empty) {
-                        const data = snapshot.docs.data();
+                        const data = snapshot.docs[0].data();
                         noticeContainer.innerHTML = `
                             <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-start gap-3">
                                 <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 flex-shrink-0"><i class="fas fa-bullhorn"></i></div>
@@ -250,8 +242,8 @@
                     }
                 });
 
-                // D. NAYA LOGIC: Attendance Percentage Load for Dashboard
-                const attQuery = query(collection(db, "attendance"), where("studentEmail", "==", user.email));
+                // D. Attendance Load (FILTERED BY EMAIL & SCHOOL)
+                const attQuery = query(collection(db, "attendance"), where("studentEmail", "==", user.email), where("schoolId", "==", schoolId));
                 onSnapshot(attQuery, (snapshot) => {
                     let presentCount = 0;
                     let totalCount = snapshot.docs.length;
@@ -265,7 +257,6 @@
                     const statEl = document.getElementById('statAttendance');
                     statEl.innerText = percentage;
                     
-                    // Color styling based on percentage
                     if(percentage !== "N/A") {
                         if(parseInt(percentage) >= 75) {
                             statEl.className = "text-lg font-black text-green-600";
@@ -294,6 +285,3 @@
 </script>
 </body>
 </html>
-
-
-    
