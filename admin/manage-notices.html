@@ -68,13 +68,31 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, where, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    let adminSchoolId = null;
+
+    // 1. Auth & Get School ID
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const adminDoc = await getDoc(doc(db, "users", user.uid));
+            if (adminDoc.exists()) {
+                adminSchoolId = adminDoc.data().schoolId;
+                loadNotices(); // Load notices only after getting school ID
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
 
     const form = document.getElementById('noticeForm');
     const postBtn = document.getElementById('postBtn');
 
-    // --- 1. POST NOTICE LOGIC ---
+    // --- 2. POST NOTICE LOGIC ---
     form.addEventListener('submit', async () => {
+        if(!adminSchoolId) return alert("School ID missing!");
+
         const title = document.getElementById('title').value;
         const targetClass = document.getElementById('targetClass').value;
         const description = document.getElementById('description').value;
@@ -83,8 +101,8 @@
         postBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Posting...';
 
         try {
-            // Save to 'announcements' collection in Firestore
             await addDoc(collection(db, "announcements"), {
+                schoolId: adminSchoolId, // FILTER ADDED HERE
                 title,
                 targetClass,
                 description,
@@ -101,51 +119,50 @@
         }
     });
 
-    // --- 2. DISPLAY NOTICES LOGIC ---
-    const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
-    onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('noticeList');
-        list.innerHTML = "";
+    // --- 3. DISPLAY NOTICES LOGIC (FILTERED) ---
+    function loadNotices() {
+        const q = query(
+            collection(db, "announcements"), 
+            where("schoolId", "==", adminSchoolId), // FILTER ADDED HERE
+            orderBy("createdAt", "desc")
+        );
         
-        if (snapshot.size === 0) {
-            list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No active announcements.</p>`;
-            return;
-        }
-
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'Just now';
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('noticeList');
+            list.innerHTML = "";
             
-            // Badge color based on target audience
-            const badgeClass = data.targetClass === 'All' 
-                ? 'bg-red-100 text-red-600' 
-                : 'bg-blue-100 text-blue-600';
-            
-            const badgeText = data.targetClass === 'All' ? 'All Classes' : `Class ${data.targetClass}`;
-
-            list.innerHTML += `
-                <div class="p-4 border rounded-xl bg-gray-50 relative">
-                    <button onclick="deleteNotice('${docSnap.id}')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 transition">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${badgeClass} mb-2 inline-block">${badgeText}</span>
-                    <h4 class="font-bold text-gray-800 text-sm mb-1 pr-6">${data.title}</h4>
-                    <p class="text-xs text-gray-600 mb-2">${data.description}</p>
-                    <p class="text-[9px] text-gray-400 font-medium"><i class="far fa-clock mr-1"></i>Posted: ${dateStr}</p>
-                </div>
-            `;
-        });
-    });
-
-    // --- 3. DELETE NOTICE LOGIC ---
-    window.deleteNotice = async (id) => {
-        if(confirm("Are you sure you want to delete this notice? It will be removed from all student dashboards.")) {
-            try {
-                await deleteDoc(doc(db, "announcements", id));
-            } catch (err) {
-                alert("Error deleting notice: " + err.message);
+            if (snapshot.size === 0) {
+                list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No active announcements.</p>`;
+                return;
             }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'Just now';
+                
+                const badgeClass = data.targetClass === 'All' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600';
+                const badgeText = data.targetClass === 'All' ? 'All Classes' : `Class ${data.targetClass}`;
+
+                list.innerHTML += `
+                    <div class="p-4 border rounded-xl bg-gray-50 relative">
+                        <button onclick="deleteNotice('${docSnap.id}')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 transition">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${badgeClass} mb-2 inline-block">${badgeText}</span>
+                        <h4 class="font-bold text-gray-800 text-sm mb-1 pr-6">${data.title}</h4>
+                        <p class="text-xs text-gray-600 mb-2">${data.description}</p>
+                        <p class="text-[9px] text-gray-400 font-medium"><i class="far fa-clock mr-1"></i>Posted: ${dateStr}</p>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    // --- 4. DELETE NOTICE LOGIC ---
+    window.deleteNotice = async (id) => {
+        if(confirm("Are you sure you want to delete this notice?")) {
+            await deleteDoc(doc(db, "announcements", id));
         }
     };
 </script>
