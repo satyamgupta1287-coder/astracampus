@@ -41,43 +41,72 @@
 </div>
 
 <script type="module">
-    import { db } from '../js/firebase-init.js';
-    import { collection, onSnapshot, query, where, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, onSnapshot, query, where, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     let studentsList = [];
-    let attendanceData = {}; // Stores selections temporarily
+    let attendanceData = {}; 
+    let adminSchoolId = ""; // SaaS Master Filter
 
     // Set today's date & block future dates
     const dateInput = document.getElementById('attDate');
-    const today = new Date().toISOString().split('T'); // add kar diya gaya hai
+    const today = new Date().toISOString().split('T')[0];
     dateInput.value = today;
     dateInput.max = today; 
 
-    // Fetch Students
-    const q = query(collection(db, "users"), where("role", "==", "student"));
-    onSnapshot(q, (snapshot) => {
-        studentsList = [];
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            studentsList.push({ id: docSnap.id, name: data.name || data.firstName || "Student", email: data.email });
-        });
-        document.getElementById('studentCount').innerText = studentsList.length + " Students";
-        renderStudents();
+    // 1. Check Auth & Get Admin's School ID
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = "../index.html"; 
+            return;
+        }
+        
+        try {
+            const adminSnap = await getDoc(doc(db, "users", user.uid));
+            if (adminSnap.exists()) {
+                adminSchoolId = adminSnap.data().schoolId;
+                fetchStudents(); // ID milne ke baad hi student fetch karega
+            }
+        } catch (error) {
+            console.error("Error fetching admin details:", error);
+        }
     });
 
+    // 2. Fetch Students WITH FILTER
+    function fetchStudents() {
+        if (!adminSchoolId) return;
+
+        // 🔥 FILTER: Sirf usi school ke bacche laao
+        const q = query(
+            collection(db, "users"), 
+            where("role", "==", "student"),
+            where("schoolId", "==", adminSchoolId)
+        );
+
+        onSnapshot(q, (snapshot) => {
+            studentsList = [];
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                studentsList.push({ id: docSnap.id, name: data.name || data.firstName || "Student", email: data.email });
+            });
+            document.getElementById('studentCount').innerText = studentsList.length + " Students";
+            renderStudents();
+        });
+    }
+
+    // Render logic (UI part, exactly same as yours)
     window.renderStudents = () => {
         const list = document.getElementById('attendanceStudentList');
         list.innerHTML = "";
         
         if(studentsList.length === 0) {
-            return list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No students found.</p>`;
+            return list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No students found in this school.</p>`;
         }
 
         studentsList.forEach((student) => {
-            // BUG FIX: Track by Unique ID instead of Email
             const status = attendanceData[student.id]; 
             
-            // Dynamic Button Styling Based on Selection
             const btnPresent = status === 'present' ? 'bg-green-500 text-white shadow-inner' : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-100';
             const btnAbsent = status === 'absent' ? 'bg-red-500 text-white shadow-inner' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100';
 
@@ -98,19 +127,18 @@
     };
 
     window.selectAtt = (id, status) => {
-        attendanceData[id] = status; // Track by Unique ID
+        attendanceData[id] = status; 
         renderStudents(); 
     };
 
+    // 3. Submit Attendance WITH FILTER
     window.submitAttendance = async () => {
         const date = dateInput.value;
         
-        // Check if all students are marked
         if (Object.keys(attendanceData).length < studentsList.length) {
             return alert("⚠️ Please mark Present or Absent for ALL students before submitting.");
         }
 
-        // Final Warning
         const confirmed = confirm(`Are you sure you want to submit final attendance for ${date}?`);
         if (!confirmed) return;
 
@@ -121,10 +149,10 @@
         try {
             for (let student of studentsList) {
                 const status = attendanceData[student.id];
-                // Smart ID: Date + Unique Student ID
                 const docId = `${date}_${student.id}`; 
                 
                 await setDoc(doc(db, "attendance", docId), {
+                    schoolId: adminSchoolId, // 🔥 MASTER FILTER: Data ke sath SchoolID save ho rahi hai
                     studentId: student.id,
                     studentEmail: student.email || "N/A", 
                     studentName: student.name,
@@ -134,7 +162,7 @@
                 });
             }
             alert("✅ Attendance Saved Successfully!");
-            attendanceData = {}; // Clear selections
+            attendanceData = {}; // Clear selections after success
             renderStudents();
         } catch (error) {
             alert("Error saving attendance: " + error.message);
