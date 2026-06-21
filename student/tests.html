@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Custom Radio Button Styling */
         input[type="radio"] { accent-color: #9333ea; width: 1.2rem; height: 1.2rem; }
     </style>
 </head>
@@ -35,13 +34,6 @@
                 <p class="text-sm text-gray-500">Finding your tests...</p>
             </div>
         </div>
-
-        <div class="px-4 mt-8" id="pastResultsSection">
-            <h2 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-history text-purple-500 mr-2"></i>My Past Results</h2>
-            <div id="myResultsContainer" class="space-y-3 pb-8">
-                <p class="text-center text-xs text-gray-500 py-4">Loading past results...</p>
-            </div>
-        </div>
     </div>
 
     <div id="activeExamView" class="hidden bg-gray-50 min-h-screen pb-24">
@@ -56,8 +48,7 @@
             </div>
         </div>
 
-        <div class="px-4 mt-6 space-y-6" id="questionsContainer">
-            </div>
+        <div class="px-4 mt-6 space-y-6" id="questionsContainer"></div>
 
         <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 z-50">
             <button onclick="submitTest()" id="submitTestBtn" class="w-full bg-purple-600 text-white font-bold py-3.5 rounded-xl hover:bg-purple-700 shadow-md transition text-lg">
@@ -75,20 +66,17 @@
 
         <div class="bg-white w-full p-6 rounded-3xl shadow-lg border border-gray-100 mb-8">
             <p class="text-xs text-gray-400 font-bold uppercase mb-2">Your Score</p>
-            <div class="text-5xl font-bold text-purple-600 mb-4 tracking-tighter" id="scoreDisplay">
-                0 / 0
-            </div>
+            <div class="text-5xl font-bold text-purple-600 mb-4 tracking-tighter" id="scoreDisplay">0 / 0</div>
             <div class="w-full bg-gray-100 rounded-full h-3 mb-2">
                 <div id="scoreBar" class="bg-purple-500 h-3 rounded-full transition-all duration-1000" style="width: 0%"></div>
             </div>
             <p class="text-xs font-bold text-gray-500" id="percentageDisplay">0% Accuracy</p>
         </div>
 
-        <button onclick="window.location.reload()" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl hover:bg-gray-900 transition">
-            Back to Tests Menu
+        <button onclick="window.location.href='dashboard.html'" class="w-full bg-gray-800 text-white font-bold py-4 rounded-xl hover:bg-gray-900 transition">
+            Back to Dashboard
         </button>
     </div>
-
 </div>
 
 <script type="module">
@@ -96,25 +84,22 @@
     import { doc, getDoc, collection, query, where, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    // Global Variables
     let currentUser = null;
     let studentData = null;
     let allTests = [];
     let currentActiveTest = null;
     let timerInterval = null;
 
-    // 1. Auth Check & Load Tests
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 studentData = userDoc.data();
-                if(studentData.class) {
-                    fetchTests(studentData.class);
-                    fetchMyResults(user.uid); // NAYI LINE: Student ke scores fetch karne ke liye
+                if(studentData.class && studentData.schoolId) {
+                    fetchTests(studentData.class, studentData.schoolId);
                 } else {
-                    document.getElementById('availableTestsContainer').innerHTML = `<p class="text-center text-red-500">Class not assigned.</p>`;
+                    document.getElementById('availableTestsContainer').innerHTML = `<p class="text-center text-red-500">Class or School ID missing.</p>`;
                 }
             }
         } else {
@@ -122,8 +107,13 @@
         }
     });
 
-    function fetchTests(studentClass) {
-        const q = query(collection(db, "tests"), where("targetClass", "==", studentClass));
+    function fetchTests(studentClass, schoolId) {
+        // FILTER ADDED FOR SCHOOL
+        const q = query(
+            collection(db, "tests"), 
+            where("targetClass", "==", String(studentClass)),
+            where("schoolId", "==", schoolId)
+        );
         onSnapshot(q, (snapshot) => {
             allTests = [];
             const container = document.getElementById('availableTestsContainer');
@@ -152,50 +142,12 @@
         });
     }
 
-    // NAYA JS: Fetch Student's Own Results
-    function fetchMyResults(uid) {
-        const resultsQuery = query(collection(db, "results"), where("studentId", "==", uid));
-        onSnapshot(resultsQuery, (snapshot) => {
-            const container = document.getElementById('myResultsContainer');
-            container.innerHTML = "";
-            
-            if(snapshot.empty) {
-                container.innerHTML = `<div class="bg-white p-4 rounded-xl text-center"><p class="text-xs text-gray-500">You haven't taken any tests yet.</p></div>`;
-                return;
-            }
-
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const percentage = (data.score / data.totalQuestions) * 100;
-                let colorClass = percentage >= 40 ? "text-green-700 bg-green-100 border-green-200" : "text-red-700 bg-red-100 border-red-200";
-
-                container.innerHTML += `
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-gray-800 text-sm">${data.testTitle}</h4>
-                            <p class="text-[10px] text-gray-500 mt-0.5">Attempted Questions</p>
-                        </div>
-                        <div class="${colorClass} border px-3 py-1.5 rounded-lg text-sm font-bold">
-                            Score: ${data.score} / ${data.totalQuestions}
-                        </div>
-                    </div>
-                `;
-            });
-        });
-    }
-
-    // 2. Start Exam UI & Logic
     window.startExam = (testId) => {
         if(!confirm("Are you ready? The timer will start immediately.")) return;
-
         currentActiveTest = allTests.find(t => t.id === testId);
-        
-        // Hide List, Show Exam View
         document.getElementById('testListView').classList.add('hidden');
         document.getElementById('activeExamView').classList.remove('hidden');
-        
         document.getElementById('activeTestTitle').innerText = currentActiveTest.title;
-
         renderQuestions(currentActiveTest.questions);
         startTimer(currentActiveTest.duration);
     };
@@ -203,26 +155,16 @@
     function renderQuestions(questions) {
         const container = document.getElementById('questionsContainer');
         container.innerHTML = "";
-
         questions.forEach((q, index) => {
             container.innerHTML += `
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                     <p class="text-xs font-bold text-purple-600 mb-2 uppercase">Question ${index + 1}</p>
                     <h3 class="text-sm font-bold text-gray-800 mb-4">${q.question}</h3>
-                    
                     <div class="space-y-3">
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition">
-                            <input type="radio" name="q_${index}" value="A"> <span class="text-sm text-gray-700">${q.options.A}</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition">
-                            <input type="radio" name="q_${index}" value="B"> <span class="text-sm text-gray-700">${q.options.B}</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition">
-                            <input type="radio" name="q_${index}" value="C"> <span class="text-sm text-gray-700">${q.options.C}</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition">
-                            <input type="radio" name="q_${index}" value="D"> <span class="text-sm text-gray-700">${q.options.D}</span>
-                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="A"> <span class="text-sm text-gray-700">${q.options.A}</span></label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="B"> <span class="text-sm text-gray-700">${q.options.B}</span></label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="C"> <span class="text-sm text-gray-700">${q.options.C}</span></label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 cursor-pointer hover:bg-purple-50 transition"><input type="radio" name="q_${index}" value="D"> <span class="text-sm text-gray-700">${q.options.D}</span></label>
                     </div>
                 </div>
             `;
@@ -232,18 +174,14 @@
     function startTimer(minutes) {
         let timeInSeconds = minutes * 60;
         const display = document.getElementById('timerDisplay');
-
         timerInterval = setInterval(() => {
             const min = Math.floor(timeInSeconds / 60);
             const sec = timeInSeconds % 60;
             display.innerText = `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
-
-            // Warning colors when less than 1 minute
             if(timeInSeconds <= 60) {
                 display.classList.remove('text-red-600');
                 display.classList.add('text-red-700', 'animate-bounce');
             }
-
             if (timeInSeconds <= 0) {
                 clearInterval(timerInterval);
                 alert("Time is up! Auto-submitting your test.");
@@ -253,53 +191,41 @@
         }, 1000);
     }
 
-    // 3. Submit & Check Logic
     window.submitTest = async () => {
-        clearInterval(timerInterval); // Stop timer
+        clearInterval(timerInterval); 
         document.getElementById('submitTestBtn').disabled = true;
         document.getElementById('submitTestBtn').innerText = "Processing Results...";
 
         let score = 0;
         const total = currentActiveTest.questions.length;
-
-        // Check answers
         currentActiveTest.questions.forEach((q, index) => {
             const selectedOpt = document.querySelector(`input[name="q_${index}"]:checked`);
-            if (selectedOpt && selectedOpt.value === q.correctAnswer) {
-                score++;
-            }
+            if (selectedOpt && selectedOpt.value === q.correctAnswer) score++;
         });
 
-        // Save to Database
         try {
             await addDoc(collection(db, "results"), {
                 studentId: currentUser.uid,
-                studentName: studentData.name || studentData.firstName || "Student",
+                studentName: studentData.name || studentData.firstName,
                 testId: currentActiveTest.id,
                 testTitle: currentActiveTest.title,
+                schoolId: studentData.schoolId, // SCHOOL FILTER ADDED HERE
                 score: score,
                 totalQuestions: total,
                 timestamp: serverTimestamp()
             });
-
             showResultScreen(score, total);
         } catch (err) {
             alert("Error saving result: " + err.message);
-            document.getElementById('submitTestBtn').disabled = false;
-            document.getElementById('submitTestBtn').innerText = "Submit Test";
         }
     };
 
     function showResultScreen(score, total) {
         document.getElementById('activeExamView').classList.add('hidden');
         document.getElementById('resultView').classList.remove('hidden');
-
         document.getElementById('scoreDisplay').innerText = `${score} / ${total}`;
-        
         const percentage = Math.round((score / total) * 100);
         document.getElementById('percentageDisplay').innerText = `${percentage}% Accuracy`;
-        
-        // Animate progress bar
         setTimeout(() => {
             document.getElementById('scoreBar').style.width = `${percentage}%`;
             if(percentage > 75) document.getElementById('scoreBar').classList.replace('bg-purple-500', 'bg-green-500');
