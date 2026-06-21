@@ -64,7 +64,7 @@
 
     <div class="px-4 mt-6">
         <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Quick Access</h2>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-4 gap-3">
             <button onclick="window.location.href='live-classes.html'" class="bg-red-50 p-3 rounded-2xl flex flex-col items-center border border-red-100 hover:bg-red-100 transition">
                 <i class="fas fa-video text-red-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Live Class</span>
             </button>
@@ -82,6 +82,10 @@
             </button>
             <button onclick="window.location.href='fees.html'" class="bg-teal-50 p-3 rounded-2xl flex flex-col items-center border border-teal-100 hover:bg-teal-100 transition">
                 <i class="fas fa-wallet text-teal-600 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">Fees</span>
+            </button>
+            
+            <button onclick="window.location.href='gallery.html'" class="bg-pink-50 p-3 rounded-2xl flex flex-col items-center border border-pink-100 hover:bg-pink-100 transition col-span-2">
+                <i class="fas fa-images text-pink-500 mb-1 text-lg"></i><span class="text-[10px] font-bold text-gray-700">School Gallery</span>
             </button>
         </div>
     </div>
@@ -111,7 +115,7 @@
         <h2 class="text-sm font-bold text-gray-800 mb-3 px-1">Latest Announcements</h2>
         <div id="announcementContainer">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <p class="text-xs text-gray-400 py-2">No new announcements.</p>
+                <p class="text-xs text-gray-400 py-2">Loading announcements...</p>
             </div>
         </div>
     </div>
@@ -126,7 +130,7 @@
         <button onclick="window.location.href='tests.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
             <i class="fas fa-edit text-lg mb-1"></i><span class="text-[9px] font-bold">Tests</span>
         </button>
-        <button onclick="window.location.href='notifications.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
+        <button onclick="window.location.href='notices.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
             <i class="fas fa-bell text-lg mb-1"></i><span class="text-[9px] font-bold">Notices</span>
         </button>
         <button onclick="window.location.href='profile.html'" class="flex flex-col items-center text-gray-400 hover:text-blue-600 transition">
@@ -138,7 +142,8 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { doc, getDoc, collection, query, where, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    // NAYA: 'orderBy' aur 'limit' hata diya gaya index error fix karne ke liye
+    import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const hour = new Date().getHours();
@@ -170,12 +175,15 @@
 
                 const targetClassStr = String(userData.class || "");
 
-                // A. Assignments Loader Fix (FILTERED BY SCHOOL)
-                const assignQuery = query(collection(db, "assignments"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"));
+                // A. Assignments Loader Fix (Firebase Index Bug Fixed)
+                const assignQuery = query(collection(db, "assignments"), where("schoolId", "==", schoolId));
                 onSnapshot(assignQuery, (snapshot) => {
                     const container = document.getElementById('assignmentsContainer');
-                    const filteredAssigns = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
+                    let filteredAssigns = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
                     
+                    // NAYA: Client-side Sort (Latest Upar)
+                    filteredAssigns.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+
                     document.getElementById('statAssignments').innerText = filteredAssigns.length;
 
                     if(filteredAssigns.length === 0) {
@@ -198,11 +206,14 @@
                     }
                 });
 
-                // B. Live Classes Loader Fix (FILTERED BY SCHOOL)
-                const classQuery = query(collection(db, "live_classes"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"));
+                // B. Live Classes Loader Fix
+                const classQuery = query(collection(db, "live_classes"), where("schoolId", "==", schoolId));
                 onSnapshot(classQuery, (snapshot) => {
                     const scheduleContainer = document.getElementById('scheduleContainer');
-                    const filteredClasses = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
+                    let filteredClasses = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
+                    
+                    // Client-side Sort
+                    filteredClasses.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
 
                     if (filteredClasses.length === 0) {
                         scheduleContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No classes scheduled for today.</p></div>`;
@@ -224,12 +235,17 @@
                     }
                 });
 
-                // C. Notices Load (FILTERED BY SCHOOL)
-                const noticeQuery = query(collection(db, "announcements"), where("schoolId", "==", schoolId), orderBy("createdAt", "desc"), limit(1));
+                // C. Notices Load Fix
+                const noticeQuery = query(collection(db, "announcements"), where("schoolId", "==", schoolId));
                 onSnapshot(noticeQuery, (snapshot) => {
                     const noticeContainer = document.getElementById('announcementContainer');
-                    if(!snapshot.empty) {
-                        const data = snapshot.docs[0].data();
+                    if(snapshot.empty) {
+                        noticeContainer.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center"><p class="text-xs text-gray-400 py-2">No new announcements.</p></div>`;
+                    } else {
+                        let allNotices = [...snapshot.docs];
+                        allNotices.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+                        
+                        const data = allNotices.data();
                         noticeContainer.innerHTML = `
                             <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 flex items-start gap-3">
                                 <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 flex-shrink-0"><i class="fas fa-bullhorn"></i></div>
