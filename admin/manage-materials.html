@@ -2,55 +2,128 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Upload</title>
+    <title>Manage Study Materials</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow">
-        <h1 class="text-xl font-bold mb-4">Upload Study Material</h1>
-        <input type="text" id="title" placeholder="Title" class="w-full p-3 border rounded-xl mb-3">
-        <input type="text" id="subject" placeholder="Subject (e.g. Science)" class="w-full p-3 border rounded-xl mb-3">
-        <input type="text" id="year" placeholder="Year (optional, e.g. 2023)" class="w-full p-3 border rounded-xl mb-3">
-        
-        <select id="className" class="w-full p-3 border rounded-xl mb-3">
-            <option value="10">Class 10</option>
-        </select>
-        
-        <select id="category" class="w-full p-3 border rounded-xl mb-4">
-            <option value="book">Books</option>
-            <option value="notes">Notes</option>
-            <option value="pyq">PYQ</option>
-            <option value="model">Model Papers</option>
-        </select>
+<body class="bg-gray-50 p-4 font-sans pb-24">
 
-        <button id="upload_btn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Upload PDF</button>
+<div class="max-w-md mx-auto">
+    <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm mb-4">
+        <button onclick="window.location.href='admin.html'" class="text-gray-500 hover:text-blue-600 transition">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </button>
+        <h1 class="text-xl font-bold text-gray-800">Study Materials</h1>
+        <div></div>
     </div>
 
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border-t-4 border-blue-500">
+        <h2 class="text-sm font-bold text-gray-400 uppercase mb-4"><i class="fas fa-file-pdf text-blue-500 mr-2"></i>Upload Material</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Title *</label>
+                <input type="text" id="title" placeholder="e.g., Chapter 1 Notes" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Subject</label>
+                    <input type="text" id="subject" placeholder="e.g., Science" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Target Class *</label>
+                    <select id="className" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="9">Class 9</option>
+                        <option value="10" selected>Class 10</option>
+                        <option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Year (Optional)</label>
+                    <input type="text" id="year" placeholder="e.g., 2026" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Category *</label>
+                    <select id="category" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-white focus:ring-2 focus:ring-blue-500">
+                        <option value="book">Books</option>
+                        <option value="notes">Notes</option>
+                        <option value="pyq">PYQ</option>
+                        <option value="model">Model Papers</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="upload_btn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition flex justify-center items-center mt-2">
+                <i class="fas fa-cloud-upload-alt mr-2"></i> Select & Upload PDF
+            </button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
-    import { db } from '../js/firebase-init.js';
-    import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    let adminSchoolId = null;
+
+    // 1. Auth & Get School ID
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const adminDoc = await getDoc(doc(db, "users", user.uid));
+            if (adminDoc.exists()) {
+                adminSchoolId = adminDoc.data().schoolId;
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
 
     const myWidget = cloudinary.createUploadWidget({ 
         cloudName: 'dl1cddemu', 
         uploadPreset: 'upload',
         resourceType: 'raw' 
-    }, (err, result) => {
+    }, async (err, result) => {
         if (!err && result.event === "success") {
-            // Yahan se data save ho raha hai
-            addDoc(collection(db, "study_materials"), { 
-                title: document.getElementById('title').value,
-                subject: document.getElementById('subject').value || 'General',
-                year: document.getElementById('year').value || 'N/A',
-                targetClass: document.getElementById('className').value,
-                type: document.getElementById('category').value,
-                fileUrl: result.info.secure_url,
-                createdAt: new Date()
-            }).then(() => alert("File uploaded successfully!"));
+            if(!adminSchoolId) return alert("School ID missing! Please refresh.");
+            
+            const btn = document.getElementById("upload_btn");
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "study_materials"), { 
+                    schoolId: adminSchoolId, // FILTER ADDED
+                    title: document.getElementById('title').value || 'Untitled',
+                    subject: document.getElementById('subject').value || 'General',
+                    year: document.getElementById('year').value || 'N/A',
+                    targetClass: document.getElementById('className').value,
+                    type: document.getElementById('category').value,
+                    fileUrl: result.info.secure_url,
+                    createdAt: serverTimestamp()
+                });
+                alert("File uploaded successfully! ✅");
+                document.getElementById('title').value = "";
+                document.getElementById('subject').value = "";
+            } catch (e) {
+                alert("Error saving: " + e.message);
+            } finally {
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i> Select & Upload PDF';
+                btn.disabled = false;
+            }
         }
     });
 
-    document.getElementById("upload_btn").addEventListener("click", () => myWidget.open());
+    document.getElementById("upload_btn").addEventListener("click", () => {
+        if(!document.getElementById('title').value) return alert("Please enter a title first!");
+        myWidget.open();
+    });
 </script>
 </body>
 </html>
