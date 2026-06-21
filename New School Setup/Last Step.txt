@@ -1,0 +1,6 @@
+Phase 4: Daily Workflow (Naya School Add Karna)
+
+​Jab bhi naya school join kare, bas ye command chalani hai:
+
+node ~/addSchool.mjs "SCHOOL_NAME" "SCHOOL_CODE" "ADMIN_EMAIL"
+Example: node ~/addSchool.mjs "St. Xavier's" "STX01" "principal@stx.com"
