@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Account Action - Auth Demo</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+
+    <h1 class="text-2xl font-bold text-center mb-2">
+      Account Action
+    </h1>
+
+    <p id="message" class="text-center text-gray-600 mb-6">
+      Processing your request...
+    </p>
+
+    <div id="passwordSection" class="hidden">
+
+      <label for="newPassword" class="block text-sm font-medium mb-2">
+        New Password
+      </label>
+
+      <input
+        id="newPassword"
+        type="password"
+        placeholder="Enter new password"
+        class="w-full border rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      <button
+        id="resetBtn"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition"
+      >
+        Reset Password
+      </button>
+
+    </div>
+
+  </div>
+
+  <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+    import {
+      getAuth,
+      applyActionCode,
+      verifyPasswordResetCode,
+      confirmPasswordReset
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCqSMjr5__HNV-LXZi5vQvGzfBQ46lRFNA",
+      authDomain: "auth-demo-f8ae4.firebaseapp.com",
+      projectId: "auth-demo-f8ae4",
+      storageBucket: "auth-demo-f8ae4.firebasestorage.app",
+      messagingSenderId: "245702722359",
+      appId: "1:245702722359:web:c669123eb90a1d282290b2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const params = new URLSearchParams(window.location.search);
+
+    const mode = params.get("mode");
+    const oobCode = params.get("oobCode");
+
+    const message = document.getElementById("message");
+    const passwordSection = document.getElementById("passwordSection");
+    const resetBtn = document.getElementById("resetBtn");
+    const passwordInput = document.getElementById("newPassword");
+
+    async function handleAction() {
+
+      try {
+
+        if (!mode || !oobCode) {
+          message.textContent = "Invalid or missing action parameters.";
+          return;
+        }
+
+        if (mode === "verifyEmail") {
+
+          await applyActionCode(auth, oobCode);
+
+          message.innerHTML =
+            "✅ Email verified successfully.<br><br>You can now log in.";
+
+          return;
+        }
+
+        if (mode === "resetPassword") {
+
+          await verifyPasswordResetCode(auth, oobCode);
+
+          message.textContent =
+            "Please enter your new password.";
+
+          passwordSection.classList.remove("hidden");
+
+          resetBtn.addEventListener("click", async () => {
+
+            const newPassword = passwordInput.value.trim();
+
+            if (newPassword.length < 6) {
+              alert("Password must be at least 6 characters.");
+              return;
+            }
+
+            resetBtn.disabled = true;
+            resetBtn.textContent = "Resetting...";
+
+            try {
+
+              await confirmPasswordReset(
+                auth,
+                oobCode,
+                newPassword
+              );
+
+              passwordSection.classList.add("hidden");
+
+              message.innerHTML =
+                "✅ Password reset successful.<br><br>You can now log in.";
+
+            } catch (error) {
+
+              console.error(error);
+
+              message.textContent =
+                "❌ Failed to reset password. The link may have expired.";
+
+              resetBtn.disabled = false;
+              resetBtn.textContent = "Reset Password";
+            }
+
+          });
+
+          return;
+        }
+
+        message.textContent =
+          "❌ Unsupported action type.";
+
+      } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "❌ This link is invalid or has expired.";
+      }
+
+    }
+
+    handleAction();
+
+  </script>
+
+</body>
+    </html>
