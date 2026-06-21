@@ -142,7 +142,7 @@
         }
     });
 
-    // Forgot Password Logic 🔥
+        // Forgot Password Logic 🔥
     forgotPwdBtn.addEventListener('click', async () => {
         const email = document.getElementById('email').value.toLowerCase().trim();
         
@@ -160,7 +160,15 @@
         forgotPwdBtn.disabled = true;
 
         try {
-            await sendPasswordResetEmail(auth, email);
+            // NAYA: Redirect URL set kiya gaya hai
+            const actionCodeSettings = {
+                url: 'https://astracampus.vercel.app/auth/action.html',
+                handleCodeInApp: false
+            };
+            
+            // Code me 'actionCodeSettings' ko pass kiya
+            await sendPasswordResetEmail(auth, email, actionCodeSettings);
+            
             successMsg.innerText = "✅ Password reset link sent! Please check your email.";
             successMsg.classList.remove('hidden');
         } catch (error) {
@@ -170,6 +178,7 @@
         forgotPwdBtn.innerText = btnOriginalText;
         forgotPwdBtn.disabled = false;
     });
+
 
     // Google Sign In
     googleBtn.addEventListener('click', async () => {
