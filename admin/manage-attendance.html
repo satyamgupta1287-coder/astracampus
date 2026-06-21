@@ -12,30 +12,65 @@
 <div class="max-w-md mx-auto">
     <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm mb-4">
         <button onclick="window.history.back()" class="text-gray-500 hover:text-blue-600 transition">
-    <i class="fas fa-arrow-left text-xl"></i>
-</button>
-
-        <h1 class="text-xl font-bold text-gray-800">Mark Attendance</h1>
+            <i class="fas fa-arrow-left text-xl"></i>
+        </button>
+        <h1 class="text-xl font-bold text-gray-800">Attendance</h1>
         <div></div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border-t-4 border-blue-600">
-        <h2 class="text-sm font-bold text-gray-400 uppercase mb-2"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Select Date</h2>
-        <input type="date" id="attDate" class="w-full p-3 border border-gray-200 rounded-xl outline-none bg-gray-50 font-bold text-gray-700 focus:ring-2 focus:ring-blue-500">
+    <div class="bg-white rounded-2xl shadow-sm p-5 mb-4 border-t-4 border-blue-600">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Date</h2>
+                <input type="date" id="attDate" class="w-full p-2.5 border border-gray-200 rounded-xl outline-none bg-gray-50 font-bold text-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase mb-2"><i class="fas fa-users text-blue-500 mr-2"></i>Class</h2>
+                <select id="classSelect" class="w-full p-2.5 border border-gray-200 rounded-xl outline-none bg-gray-50 font-bold text-gray-700 text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select Class</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11">Class 11</option>
+                    <option value="12">Class 12</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="loadClassData()" id="loadBtn" class="w-full bg-blue-50 border border-blue-200 text-blue-600 font-bold py-3 rounded-xl hover:bg-blue-100 transition text-sm">
+            Load Students
+        </button>
+    </div>
+
+    <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm mb-4 border border-gray-100">
+        <div class="text-center flex-1 border-r border-gray-200">
+            <p class="text-[10px] text-gray-400 font-bold uppercase">Total</p>
+            <p class="text-xl font-black text-gray-700" id="countTotal">0</p>
+        </div>
+        <div class="text-center flex-1 border-r border-gray-200">
+            <p class="text-[10px] text-gray-400 font-bold uppercase">Present</p>
+            <p class="text-xl font-black text-green-500" id="countPresent">0</p>
+        </div>
+        <div class="text-center flex-1">
+            <p class="text-[10px] text-gray-400 font-bold uppercase">Absent</p>
+            <p class="text-xl font-black text-red-500" id="countAbsent">0</p>
+        </div>
+    </div>
+
+    <div id="statusAlert" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-700 p-3 rounded-xl mb-4 text-xs font-bold text-center flex items-center justify-center gap-2">
+        <i class="fas fa-check-circle text-emerald-500 text-lg"></i>
+        Attendance already submitted. (View Only)
     </div>
     
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="text-sm font-bold text-gray-400 uppercase">Student List</h2>
-            <span class="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded" id="studentCount">0</span>
+    <div class="bg-transparent rounded-2xl mb-6">
+        <div class="flex justify-between items-center mb-3 px-1">
+            <h2 class="text-sm font-bold text-gray-500 uppercase">Student List</h2>
         </div>
         <div id="attendanceStudentList" class="space-y-3">
-            <p class="text-center text-sm text-gray-400 py-4">Loading students...</p>
+            <p class="text-center text-sm text-gray-400 py-4">Please select Class & Date, then click 'Load Students'.</p>
         </div>
     </div>
 
     <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 z-50">
-        <button id="submitBtn" onclick="submitAttendance()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition text-lg flex justify-center items-center">
+        <button id="submitBtn" onclick="submitAttendance()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 shadow-md transition text-lg flex justify-center items-center hidden">
             <i class="fas fa-check-circle mr-2"></i> Submit Attendance
         </button>
     </div>
@@ -43,105 +78,189 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, onSnapshot, query, where, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, onSnapshot, query, where, doc, setDoc, getDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    // NOTE: import correct from firestore, un-commenting below:
+    // NAYA FIX: Correct import statement for firestore
+</script>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, onSnapshot, query, where, doc, setDoc, getDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     let studentsList = [];
     let attendanceData = {}; 
-    let adminSchoolId = ""; // SaaS Master Filter
+    let adminSchoolId = ""; 
+    let isViewMode = false;
 
-    // Set today's date & block future dates
     const dateInput = document.getElementById('attDate');
-    const today = new Date().toISOString().split('T')[0];
+    const classSelect = document.getElementById('classSelect');
+    
+    const today = new Date().toISOString().split('T');
     dateInput.value = today;
     dateInput.max = today; 
 
-    // 1. Check Auth & Get Admin's School ID
+    // 1. Check Auth
     onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.href = "../index.html"; 
-            return;
-        }
-        
-        try {
-            const adminSnap = await getDoc(doc(db, "users", user.uid));
-            if (adminSnap.exists()) {
-                adminSchoolId = adminSnap.data().schoolId;
-                fetchStudents(); // ID milne ke baad hi student fetch karega
-            }
-        } catch (error) {
-            console.error("Error fetching admin details:", error);
+        if (!user) { window.location.href = "../index.html"; return; }
+        const adminSnap = await getDoc(doc(db, "users", user.uid));
+        if (adminSnap.exists()) {
+            adminSchoolId = adminSnap.data().schoolId;
         }
     });
 
-    // 2. Fetch Students WITH FILTER
-    function fetchStudents() {
+    // 2. Load Class Data (Manual Trigger via Button)
+    window.loadClassData = () => {
+        const selectedDate = dateInput.value;
+        const selectedClass = classSelect.value;
+
+        if(!selectedDate || !selectedClass) {
+            alert("⚠️ Date aur Class dono select karna zaroori hai!");
+            return;
+        }
+
+        document.getElementById('attendanceStudentList').innerHTML = `<p class="text-center text-sm text-blue-500 py-4 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</p>`;
+        
+        fetchStudents(selectedClass, selectedDate);
+    };
+
+    function fetchStudents(cls, dateStr) {
         if (!adminSchoolId) return;
 
-        // 🔥 FILTER: Sirf usi school ke bacche laao
+        // Fetch ALL students of the school, then filter client side (No Index Error)
         const q = query(
             collection(db, "users"), 
-            where("role", "==", "student"),
+            where("role", "==", "student"), 
             where("schoolId", "==", adminSchoolId)
         );
-
+        
         onSnapshot(q, (snapshot) => {
             studentsList = [];
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                studentsList.push({ id: docSnap.id, name: data.name || data.firstName || "Student", email: data.email });
+                // 🔥 NAYA: Sirf selected class ke bacche filter honge
+                if(data.class === cls) {
+                    studentsList.push({ id: docSnap.id, name: data.name || data.firstName || "Student", class: data.class });
+                }
             });
-            document.getElementById('studentCount').innerText = studentsList.length + " Students";
-            renderStudents();
+            
+            document.getElementById('countTotal').innerText = studentsList.length;
+            
+            if(studentsList.length === 0) {
+                document.getElementById('attendanceStudentList').innerHTML = `<p class="text-center text-sm text-gray-400 py-4 bg-white rounded-2xl shadow-sm">No students found in Class ${cls}.</p>`;
+                document.getElementById('submitBtn').classList.add('hidden');
+                document.getElementById('statusAlert').classList.add('hidden');
+                document.getElementById('countPresent').innerText = "0";
+                document.getElementById('countAbsent').innerText = "0";
+                return;
+            }
+
+            checkDateAttendance(dateStr, cls); 
         });
     }
 
-    // Render logic (UI part, exactly same as yours)
+    async function checkDateAttendance(selectedDate, selectedClass) {
+        attendanceData = {}; 
+        isViewMode = false;
+        document.getElementById('submitBtn').classList.remove('hidden');
+        document.getElementById('statusAlert').classList.add('hidden');
+
+        // Fetch attendance for this date & school
+        const q = query(
+            collection(db, "attendance"), 
+            where("schoolId", "==", adminSchoolId),
+            where("date", "==", selectedDate)
+        );
+
+        const snap = await getDocs(q);
+
+        let attendanceForThisClassExists = false;
+
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            // NAYA: Match check karega ki kya is class ki attendance li ja chuki hai
+            if (studentsList.find(s => s.id === data.studentId)) {
+                attendanceForThisClassExists = true;
+                attendanceData[data.studentId] = data.status; 
+            }
+        });
+
+        if(attendanceForThisClassExists) {
+            isViewMode = true; // Agar attendance mil gayi, toh Read-Only ho jayega
+            document.getElementById('submitBtn').classList.add('hidden'); 
+            document.getElementById('statusAlert').classList.remove('hidden'); 
+        }
+        
+        renderStudents();
+    }
+
     window.renderStudents = () => {
         const list = document.getElementById('attendanceStudentList');
         list.innerHTML = "";
         
-        if(studentsList.length === 0) {
-            return list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No students found in this school.</p>`;
-        }
+        let presentCount = 0;
+        let absentCount = 0;
 
         studentsList.forEach((student) => {
             const status = attendanceData[student.id]; 
             
-            const btnPresent = status === 'present' ? 'bg-green-500 text-white shadow-inner' : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-100';
-            const btnAbsent = status === 'absent' ? 'bg-red-500 text-white shadow-inner' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100';
+            if(status === 'present') presentCount++;
+            if(status === 'absent') absentCount++;
+            
+            let btnPresent = "bg-gray-50 text-gray-400 border border-gray-200";
+            let btnAbsent = "bg-gray-50 text-gray-400 border border-gray-200";
+
+            if (status === 'present') {
+                btnPresent = "bg-green-500 text-white shadow-md border-transparent";
+            } else if (status === 'absent') {
+                btnAbsent = "bg-red-500 text-white shadow-md border-transparent";
+            } else if (!isViewMode) {
+                btnPresent = "bg-green-50 text-green-600 border border-green-200 hover:bg-green-100";
+                btnAbsent = "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100";
+            }
+
+            const clickPresent = isViewMode ? "" : `onclick="selectAtt('${student.id}', 'present')"`;
+            const clickAbsent = isViewMode ? "" : `onclick="selectAtt('${student.id}', 'absent')"`;
 
             list.innerHTML += `
-                <div class="flex flex-col p-3 border border-gray-100 rounded-xl bg-gray-50 shadow-sm transition-all duration-200 ${status ? 'border-blue-200 bg-blue-50/30' : ''}">
-                    <span class="font-bold text-gray-800 mb-2 capitalize text-sm">${student.name}</span>
+                <div class="flex flex-col p-3 border border-gray-100 rounded-xl bg-white shadow-sm mb-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-gray-800 text-sm capitalize">${student.name}</span>
+                        <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Class ${student.class}</span>
+                    </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="selectAtt('${student.id}', 'present')" class="${btnPresent} py-2 rounded-lg text-xs font-bold transition uppercase tracking-wider">
+                        <button ${clickPresent} class="${btnPresent} py-2 rounded-lg text-xs font-bold transition uppercase">
                             <i class="fas fa-check mr-1"></i> Present
                         </button>
-                        <button onclick="selectAtt('${student.id}', 'absent')" class="${btnAbsent} py-2 rounded-lg text-xs font-bold transition uppercase tracking-wider">
+                        <button ${clickAbsent} class="${btnAbsent} py-2 rounded-lg text-xs font-bold transition uppercase">
                             <i class="fas fa-times mr-1"></i> Absent
                         </button>
                     </div>
                 </div>
             `;
         });
+
+        document.getElementById('countPresent').innerText = presentCount;
+        document.getElementById('countAbsent').innerText = absentCount;
     };
 
     window.selectAtt = (id, status) => {
+        if(isViewMode) return; 
         attendanceData[id] = status; 
         renderStudents(); 
     };
 
-    // 3. Submit Attendance WITH FILTER
     window.submitAttendance = async () => {
+        if(isViewMode) return; 
+
         const date = dateInput.value;
+        const cls = classSelect.value;
         
         if (Object.keys(attendanceData).length < studentsList.length) {
             return alert("⚠️ Please mark Present or Absent for ALL students before submitting.");
         }
 
-        const confirmed = confirm(`Are you sure you want to submit final attendance for ${date}?`);
-        if (!confirmed) return;
+        if(!confirm(`Are you sure you want to submit final attendance for Class ${cls} on ${date}?`)) return;
 
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
@@ -153,29 +272,23 @@
                 const docId = `${date}_${student.id}`; 
                 
                 await setDoc(doc(db, "attendance", docId), {
-                    schoolId: adminSchoolId, // 🔥 MASTER FILTER: Data ke sath SchoolID save ho rahi hai
+                    schoolId: adminSchoolId, 
                     studentId: student.id,
-                    studentEmail: student.email || "N/A", 
                     studentName: student.name,
+                    className: student.class,
                     date: date,
                     status: status,
-                    timestamp: new Date()
+                    createdAt: serverTimestamp()
                 });
             }
             alert("✅ Attendance Saved Successfully!");
-            attendanceData = {}; // Clear selections after success
-            renderStudents();
+            checkDateAttendance(date, cls); 
         } catch (error) {
             alert("Error saving attendance: " + error.message);
         }
-
-        submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Submit Attendance';
         submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Submit Attendance';
     };
 </script>
-
 </body>
 </html>
-
-
-    
