@@ -62,7 +62,6 @@
     let currentUser = null;
     let studentData = null;
 
-    // 1. Check Auth & Load Profile
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
@@ -76,7 +75,6 @@
         }
     });
 
-    // 2. Submit Doubt Logic
     const form = document.getElementById('doubtForm');
     const submitBtn = document.getElementById('submitBtn');
 
@@ -84,8 +82,8 @@
         const subject = document.getElementById('subject').value;
         const question = document.getElementById('question').value;
 
-        if(!studentData || !studentData.class) {
-            return alert("Your class profile is not updated. Cannot send doubt.");
+        if(!studentData || !studentData.class || !studentData.schoolId) {
+            return alert("Your profile is incomplete. Cannot send doubt.");
         }
 
         submitBtn.disabled = true;
@@ -96,10 +94,11 @@
                 studentId: currentUser.uid,
                 studentName: studentData.name || studentData.firstName,
                 targetClass: studentData.class,
+                schoolId: studentData.schoolId, // FILTER ADDED
                 subject: subject,
                 question: question,
-                reply: "", // Admin will fill this later
-                status: "Pending", // Pending or Resolved
+                reply: "", 
+                status: "Pending", 
                 createdAt: serverTimestamp()
             });
 
@@ -113,7 +112,6 @@
         }
     });
 
-    // 3. Load My Doubts Logic
     function loadMyDoubts(uid) {
         const q = query(collection(db, "doubts"), where("studentId", "==", uid), orderBy("createdAt", "desc"));
         
@@ -136,7 +134,6 @@
                 const data = docSnap.data();
                 const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'Just now';
                 
-                // Styling based on status
                 const isPending = data.status === "Pending";
                 const statusBadge = isPending 
                     ? `<span class="bg-yellow-100 text-yellow-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Pending</span>` 
