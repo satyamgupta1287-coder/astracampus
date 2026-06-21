@@ -42,28 +42,50 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, query, orderBy, onSnapshot, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, query, orderBy, onSnapshot, where, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const testSelector = document.getElementById('testSelector');
     const resultsList = document.getElementById('resultsList');
     const totalAttempts = document.getElementById('totalAttempts');
+    let adminSchoolId = null;
 
-    // 1. Load All Available Tests in Dropdown
-    const testQuery = query(collection(db, "tests"), orderBy("createdAt", "desc"));
-    onSnapshot(testQuery, (snapshot) => {
-        if(snapshot.empty) {
-            testSelector.innerHTML = `<option value="">No tests published yet</option>`;
-            return;
+    // 1. Auth & Get School ID
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const adminDoc = await getDoc(doc(db, "users", user.uid));
+            if (adminDoc.exists()) {
+                adminSchoolId = adminDoc.data().schoolId;
+                loadTestsDropdown();
+            }
+        } else {
+            window.location.href = "../index.html";
         }
-
-        testSelector.innerHTML = `<option value="">-- Choose a Test --</option>`;
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            testSelector.innerHTML += `<option value="${doc.id}">${data.title} (Class ${data.targetClass})</option>`;
-        });
     });
 
-    // 2. Fetch Results when a Test is Selected
+    // 2. Load All Available Tests for THIS School
+    function loadTestsDropdown() {
+        const testQuery = query(
+            collection(db, "tests"), 
+            where("schoolId", "==", adminSchoolId), // FILTER ADDED
+            orderBy("createdAt", "desc")
+        );
+        
+        onSnapshot(testQuery, (snapshot) => {
+            if(snapshot.empty) {
+                testSelector.innerHTML = `<option value="">No tests published yet</option>`;
+                return;
+            }
+
+            testSelector.innerHTML = `<option value="">-- Choose a Test --</option>`;
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                testSelector.innerHTML += `<option value="${docSnap.id}">${data.title} (Class ${data.targetClass})</option>`;
+            });
+        });
+    }
+
+    // 3. Fetch Results when a Test is Selected
     testSelector.addEventListener('change', (e) => {
         const selectedTestId = e.target.value;
         
@@ -77,7 +99,6 @@
             return;
         }
 
-        // Query results for this specific test, ordered by score descending (Top scorer first)
         const resultsQuery = query(collection(db, "results"), where("testId", "==", selectedTestId), orderBy("score", "desc"));
         
         onSnapshot(resultsQuery, (snapshot) => {
@@ -95,7 +116,6 @@
                 const percentage = Math.round((data.score / data.totalQuestions) * 100);
                 const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'Just now';
                 
-                // Styling based on Rank
                 let rankBadge = `<span class="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-600 font-bold rounded-full text-xs">${rank}</span>`;
                 let borderStyle = "border-gray-100";
                 
@@ -108,7 +128,6 @@
                     rankBadge = `<span class="w-6 h-6 flex items-center justify-center bg-orange-100 text-orange-600 font-bold rounded-full text-xs">3</span>`;
                 }
 
-                // Status styling (Pass/Fail)
                 let scoreColor = percentage >= 40 ? "text-green-600" : "text-red-500";
 
                 resultsList.innerHTML += `
