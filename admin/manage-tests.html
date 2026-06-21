@@ -45,8 +45,7 @@
             <h2 class="text-sm font-bold text-gray-400 uppercase"><i class="fas fa-list-ol text-purple-500 mr-2"></i>Step 2: Add Questions</h2>
         </div>
 
-        <div id="questionsContainer" class="space-y-6">
-            </div>
+        <div id="questionsContainer" class="space-y-6"></div>
 
         <button onclick="addQuestionBlock()" class="mt-4 w-full bg-purple-50 text-purple-600 font-bold py-3 rounded-xl border border-purple-200 hover:bg-purple-100 transition border-dashed">
             <i class="fas fa-plus-circle mr-2"></i> Add Question
@@ -74,9 +73,25 @@
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, where, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
+    let adminSchoolId = null;
+    let schoolTestIds = []; // Stores test IDs belonging to this school
     let questionCount = 0;
+
+    // 1. Auth & Get School ID
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const adminDoc = await getDoc(doc(db, "users", user.uid));
+            if (adminDoc.exists()) {
+                adminSchoolId = adminDoc.data().schoolId;
+                loadTestsAndResults(); // Load after getting School ID
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
 
     window.addQuestionBlock = () => {
         questionCount++;
@@ -109,9 +124,11 @@
     };
 
     window.removeQuestionBlock = (id) => { document.getElementById(`qBlock-${id}`).remove(); };
-    addQuestionBlock(); // Load first default
+    addQuestionBlock();
 
     window.saveTestToDB = async () => {
+        if(!adminSchoolId) return alert("School ID missing!");
+
         const title = document.getElementById('testTitle').value;
         const targetClass = document.getElementById('targetClass').value;
         const duration = document.getElementById('testDuration').value;
@@ -143,6 +160,7 @@
 
         try {
             await addDoc(collection(db, "tests"), {
+                schoolId: adminSchoolId, // FILTER ADDED
                 title, targetClass, duration: parseInt(duration),
                 totalQuestions: questionsArray.length, questions: questionsArray,
                 createdAt: serverTimestamp()
@@ -156,62 +174,91 @@
         }
     };
 
-    // DISPLAY TESTS
-    const q = query(collection(db, "tests"), orderBy("createdAt", "desc"));
-    onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('testList');
-        list.innerHTML = "";
-        if (snapshot.empty) return list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No tests published yet.</p>`;
+    // 2. DISPLAY TESTS & RESULTS (FILTERED)
+    function loadTestsAndResults() {
+        const q = query(
+            collection(db, "tests"), 
+            where("schoolId", "==", adminSchoolId), // FILTER ADDED
+            orderBy("createdAt", "desc")
+        );
+        
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('testList');
+            list.innerHTML = "";
+            schoolTestIds = [];
 
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            list.innerHTML += `
-                <div class="p-3 border rounded-xl bg-gray-50 flex justify-between items-center">
-                    <div>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase bg-purple-100 text-purple-600 mb-1 inline-block">Class ${data.targetClass}</span>
-                        <h4 class="font-bold text-gray-800 text-sm line-clamp-1">${data.title}</h4>
-                        <p class="text-[11px] text-gray-500 mt-0.5">${data.totalQuestions} Questions • ${data.duration} Mins</p>
+            if (snapshot.empty) {
+                list.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No tests published yet.</p>`;
+                loadResults(); // Clear results
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                schoolTestIds.push(docSnap.id); // Save test ID to filter results later
+                
+                list.innerHTML += `
+                    <div class="p-3 border rounded-xl bg-gray-50 flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase bg-purple-100 text-purple-600 mb-1 inline-block">Class ${data.targetClass}</span>
+                            <h4 class="font-bold text-gray-800 text-sm line-clamp-1">${data.title}</h4>
+                            <p class="text-[11px] text-gray-500 mt-0.5">${data.totalQuestions} Questions • ${data.duration} Mins</p>
+                        </div>
+                        <button onclick="deleteTest('${docSnap.id}')" class="bg-white text-red-500 p-2 rounded-lg text-xs font-bold border border-gray-200 hover:bg-red-50 transition shadow-sm"><i class="fas fa-trash"></i></button>
                     </div>
-                    <button onclick="deleteTest('${docSnap.id}')" class="bg-white text-red-500 p-2 rounded-lg text-xs font-bold border border-gray-200 hover:bg-red-50 transition shadow-sm"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
+                `;
+            });
+
+            // Now load results for these tests
+            loadResults();
         });
-    });
+    }
 
     window.deleteTest = async (id) => { if(confirm("Are you sure you want to delete this Test?")) await deleteDoc(doc(db, "tests", id)); };
 
-    // NAYA JS: DISPLAY ALL STUDENT RESULTS (Admin Panel)
-    const resultsQuery = query(collection(db, "results")); 
-    onSnapshot(resultsQuery, (snapshot) => {
+    function loadResults() {
         const resultsList = document.getElementById('resultsList');
-        resultsList.innerHTML = "";
-        
-        if (snapshot.empty) {
+        if(schoolTestIds.length === 0) {
             return resultsList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No results submitted yet.</p>`;
         }
 
-        // Sort locally by time to avoid Firebase index requirement
-        let resultsData = [];
-        snapshot.forEach((docSnap) => resultsData.push(docSnap.data()));
-        resultsData.sort((a, b) => b.timestamp - a.timestamp);
+        const resultsQuery = query(collection(db, "results")); 
+        onSnapshot(resultsQuery, (snapshot) => {
+            resultsList.innerHTML = "";
+            let resultsData = [];
+            
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                // ONLY SHOW RESULT IF TEST BELONGS TO THIS SCHOOL
+                if(schoolTestIds.includes(data.testId)) {
+                    resultsData.push(data);
+                }
+            });
 
-        resultsData.forEach((data) => {
-            const percentage = (data.score / data.totalQuestions) * 100;
-            let badgeClass = percentage >= 40 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
+            if(resultsData.length === 0) {
+                return resultsList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">No results found for your tests.</p>`;
+            }
 
-            resultsList.innerHTML += `
-                <div class="p-3 border border-gray-100 rounded-xl bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition">
-                    <div>
-                        <h4 class="font-bold text-gray-800 text-sm capitalize">${data.studentName || "Unknown Student"}</h4>
-                        <p class="text-[11px] font-bold text-purple-600 mt-0.5">${data.testTitle}</p>
+            resultsData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            resultsData.forEach((data) => {
+                const percentage = (data.score / data.totalQuestions) * 100;
+                let badgeClass = percentage >= 40 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
+
+                resultsList.innerHTML += `
+                    <div class="p-3 border border-gray-100 rounded-xl bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition">
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-sm capitalize">${data.studentName || "Unknown Student"}</h4>
+                            <p class="text-[11px] font-bold text-purple-600 mt-0.5">${data.testTitle}</p>
+                        </div>
+                        <div class="${badgeClass} px-3 py-1 rounded-lg text-sm font-bold shadow-sm border border-white">
+                            ${data.score} / ${data.totalQuestions}
+                        </div>
                     </div>
-                    <div class="${badgeClass} px-3 py-1 rounded-lg text-sm font-bold shadow-sm border border-white">
-                        ${data.score} / ${data.totalQuestions}
-                    </div>
-                </div>
-            `;
+                `;
+            });
         });
-    });
+    }
 </script>
 </body>
 </html>
