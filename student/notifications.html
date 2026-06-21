@@ -5,32 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-gray-50 p-4 font-sans pb-20">
 
-<div class="max-w-md mx-auto bg-white rounded-2xl shadow-sm p-6 min-h-[80vh]">
-    <h2 class="text-xl font-bold text-gray-800 mb-6">School Notices</h2>
-    <div id="noticeList" class="space-y-4">
+<div class="max-w-md mx-auto">
+    <div class="flex justify-between items-center mb-6 pt-4">
+        <button onclick="window.location.href='dashboard.html'" class="bg-white p-2.5 rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:text-yellow-600 transition">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="text-xl font-bold text-gray-800">Notice Board</h1>
+        <div class="w-10"></div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm p-6 min-h-[75vh] border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800 mb-6 flex items-center"><i class="fas fa-bullhorn text-yellow-500 mr-2"></i> Latest Updates</h2>
+        <div id="noticeList" class="space-y-4">
+            <div class="text-center py-10">
+                <i class="fas fa-spinner fa-spin text-3xl text-yellow-500 mb-2"></i>
+                <p class="text-sm text-gray-500">Checking for notices...</p>
+            </div>
         </div>
+    </div>
 </div>
 
 <script type="module">
-    import { db } from '../js/firebase-init.js';
-    import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { auth, db } from '../js/firebase-init.js';
+    import { doc, getDoc, collection, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-    const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
-    onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('noticeList');
-        list.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            list.innerHTML += `
-                <div class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-xl">
-                    <h4 class="font-bold text-blue-900">${data.title}</h4>
-                    <p class="text-sm text-blue-700 mt-1">${data.message}</p>
-                </div>
-            `;
-        });
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if(userDoc.exists()) {
+                const schoolId = userDoc.data().schoolId;
+                const studentClass = String(userDoc.data().class || "");
+
+                // FETCH ANNOUNCEMENTS FOR THIS SCHOOL
+                const q = query(
+                    collection(db, "announcements"), 
+                    where("schoolId", "==", schoolId),
+                    orderBy("createdAt", "desc")
+                );
+
+                onSnapshot(q, (snapshot) => {
+                    const list = document.getElementById('noticeList');
+                    list.innerHTML = "";
+
+                    // Client-side filter for 'All' or specific class
+                    const docs = snapshot.docs.filter(d => {
+                        const target = String(d.data().targetClass);
+                        return target === "All" || target === studentClass;
+                    });
+
+                    if(docs.length === 0) {
+                        list.innerHTML = `
+                            <div class="text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
+                                <i class="fas fa-check-circle text-4xl text-gray-300 mb-3"></i>
+                                <p class="text-gray-500 font-bold">You're all caught up!</p>
+                                <p class="text-xs text-gray-400 mt-1">No active announcements right now.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    docs.forEach((docSnap) => {
+                        const data = docSnap.data();
+                        const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Just now';
+                        
+                        list.innerHTML += `
+                            <div class="border-l-4 border-yellow-500 bg-yellow-50/50 p-5 rounded-r-2xl border-y border-r border-gray-100 shadow-sm relative">
+                                <span class="absolute top-4 right-4 text-[10px] text-gray-400 font-bold"><i class="far fa-clock mr-1"></i>${dateStr}</span>
+                                <h4 class="font-bold text-gray-800 text-base pr-20 mb-2">${data.title}</h4>
+                                <p class="text-sm text-gray-600 leading-relaxed">${data.description || data.message}</p>
+                            </div>
+                        `;
+                    });
+                });
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
     });
 </script>
 </body>
