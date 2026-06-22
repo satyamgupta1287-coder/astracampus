@@ -16,7 +16,9 @@
 </button>
 
         <h1 class="text-xl font-bold text-gray-800">Test Results</h1>
-        <div></div>
+        <button onclick="window.location.href='add-results.html'" class="text-gray-500 hover:text-teal-600 transition">
+            <i class="fas fa-plus-circle text-xl"></i>
+        </button>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6 border-t-4 border-green-500">
@@ -83,6 +85,9 @@
                 const data = docSnap.data();
                 testSelector.innerHTML += `<option value="${docSnap.id}">${data.title} (Class ${data.targetClass})</option>`;
             });
+        }, (error) => {
+            console.error("Error loading tests dropdown:", error);
+            testSelector.innerHTML = `<option value="">Error loading tests - check console</option>`;
         });
     }
 
@@ -150,6 +155,19 @@
                 `;
                 rank++;
             });
+        }, (error) => {
+            console.error("Error loading results:", error);
+            totalAttempts.innerText = `Error`;
+            if (error.code === 'failed-precondition') {
+                resultsList.innerHTML = `
+                    <div class="text-center py-6 px-3">
+                        <i class="fas fa-triangle-exclamation text-yellow-500 text-3xl mb-3"></i>
+                        <p class="text-sm font-bold text-gray-700 mb-1">Firestore index missing</p>
+                        <p class="text-xs text-gray-500">Open the browser console (F12) and click the link in the error to create the required index, then reload this page.</p>
+                    </div>`;
+            } else {
+                resultsList.innerHTML = `<p class="text-center text-sm text-red-500 py-4">Error loading results: ${error.message}</p>`;
+            }
         });
     });
 </script>
