@@ -22,7 +22,7 @@
     <div class="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-8">
         <h2 class="text-sm font-bold text-slate-800 mb-4"><i class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Video to Wistia</h2>
         <form id="videoForm" class="space-y-3" onsubmit="return false;">
-            
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Class</label>
@@ -33,7 +33,7 @@
                     <input type="text" id="subject" required placeholder="e.g. Physics" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
                 </div>
             </div>
-            
+
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lecture Title / Topic</label>
                 <input type="text" id="title" required placeholder="e.g. Newton's Laws" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
@@ -43,12 +43,24 @@
                 <input type="file" id="videoFile" accept="video/mp4,video/x-m4v,video/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                 <i class="fas fa-film text-blue-400 text-2xl mb-2"></i>
                 <p class="text-xs font-bold text-slate-600 truncate px-2" id="fileNameText">Tap to select video (.mp4)</p>
+                <p class="text-[10px] text-slate-400 mt-1" id="fileSizeText"></p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progressWrap" class="hidden">
+                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-150" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-1">
+                    <span class="text-[10px] font-bold text-blue-600" id="progressPercent">0%</span>
+                    <span class="text-[10px] text-slate-400" id="progressBytes"></span>
+                </div>
             </div>
 
             <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl mt-2 transition shadow-md shadow-blue-100 flex justify-center items-center gap-2 relative overflow-hidden">
                 <i class="fas fa-upload"></i> Start Upload & Publish
             </button>
-            
+
             <p id="uploadStatus" class="text-[11px] text-center font-bold text-blue-600 hidden mt-2"></p>
         </form>
     </div>
@@ -60,23 +72,37 @@
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     // Aapka Wistia API Password (lowercase 'c' ke sath)
-    const WISTIA_API_PASSWORD = "cdd0acb94d045a539e14e162c96c2d8bc29f6ab7cb29ae9689c2defcce7c9b04"; 
+    const WISTIA_API_PASSWORD = "cdd0acb94d045a539e14e162c96c2d8bc29f6ab7cb29ae9689c2defcce7c9b04";
 
     let adminSchoolId = null;
     const form = document.getElementById('videoForm');
     const submitBtn = document.getElementById('submitBtn');
     const fileInput = document.getElementById('videoFile');
     const fileNameText = document.getElementById('fileNameText');
+    const fileSizeText = document.getElementById('fileSizeText');
     const uploadStatus = document.getElementById('uploadStatus');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressBytes = document.getElementById('progressBytes');
 
-    // Jab file select ho tab naam dikhaye
+    function formatBytes(bytes) {
+        if (!bytes) return "0 MB";
+        const mb = bytes / (1024 * 1024);
+        return mb >= 1 ? mb.toFixed(1) + " MB" : (bytes / 1024).toFixed(0) + " KB";
+    }
+
+    // Jab file select ho tab naam + size dikhaye
     fileInput.addEventListener('change', (e) => {
-        if(e.target.files.length > 0) {
-            fileNameText.innerText = e.target.files.name;
+        const selectedFile = e.target.files[0]; // ✅ FIX: [0] use karo, FileList nahi
+        if (selectedFile) {
+            fileNameText.innerText = selectedFile.name; // ✅ FIX: .files[0].name
             fileNameText.classList.add('text-blue-600');
+            fileSizeText.innerText = formatBytes(selectedFile.size);
         } else {
             fileNameText.innerText = "Tap to select video (.mp4)";
             fileNameText.classList.remove('text-blue-600');
+            fileSizeText.innerText = "";
         }
     });
 
@@ -90,10 +116,43 @@
         }
     });
 
+    // XHR based upload so we get real progress events (fetch can't report upload progress)
+    function uploadWithProgress(formData, totalBytes) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://upload.wistia.com/');
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percent = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percent + "%";
+                    progressPercent.innerText = percent + "%";
+                    progressBytes.innerText = `${formatBytes(event.loaded)} / ${formatBytes(event.total)}`;
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch (err) {
+                        reject(new Error("Invalid response from Wistia"));
+                    }
+                } else {
+                    reject(new Error("Wistia Error: " + xhr.responseText));
+                }
+            };
+
+            xhr.onerror = () => reject(new Error("Network error during upload"));
+
+            xhr.send(formData);
+        });
+    }
+
     // Upload & Submit Logic
     form.addEventListener('submit', async () => {
-        const file = fileInput.files;
-        if(!file) return alert("Please select a video file!");
+        const file = fileInput.files[0]; // ✅ FIX: actual File object, not FileList
+        if (!file) return alert("Please select a video file!");
 
         const title = document.getElementById('title').value.trim();
         const targetClass = document.getElementById('targetClass').value.trim();
@@ -103,28 +162,21 @@
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading to Wistia...';
         uploadStatus.classList.remove('hidden');
         uploadStatus.innerText = "Please wait, uploading video... (Do not close this app)";
-        uploadStatus.classList.replace('text-emerald-600', 'text-blue-600');
-        uploadStatus.classList.replace('text-red-600', 'text-blue-600');
+        uploadStatus.classList.remove('text-emerald-600', 'text-red-600');
+        uploadStatus.classList.add('text-blue-600');
+
+        progressWrap.classList.remove('hidden');
+        progressBar.style.width = "0%";
+        progressPercent.innerText = "0%";
+        progressBytes.innerText = `0 MB / ${formatBytes(file.size)}`;
 
         try {
             const formData = new FormData();
             formData.append('api_password', WISTIA_API_PASSWORD);
-            formData.append('file', file);
-            formData.append('name', title); 
+            formData.append('file', file); // ✅ FIX: real File object
+            formData.append('name', title);
 
-            // Wistia Server par bhejna
-            const wistiaResponse = await fetch('https://upload.wistia.com/', {
-                method: 'POST',
-                body: formData
-            });
-
-            // Asli Error pakadne ka system
-            if (!wistiaResponse.ok) {
-                const errorMessage = await wistiaResponse.text();
-                throw new Error("Wistia Error: " + errorMessage);
-            }
-
-            const wistiaData = await wistiaResponse.json();
+            const wistiaData = await uploadWithProgress(formData, file.size);
             const generatedWistiaId = wistiaData.hashed_id;
 
             uploadStatus.innerText = "Saving to Firebase Database...";
@@ -135,7 +187,7 @@
                 targetClass: targetClass,
                 subject: subject,
                 title: title,
-                wistiaId: generatedWistiaId, 
+                wistiaId: generatedWistiaId,
                 createdAt: serverTimestamp()
             });
 
@@ -143,15 +195,23 @@
             form.reset();
             fileNameText.innerText = "Tap to select video (.mp4)";
             fileNameText.classList.remove('text-blue-600');
+            fileSizeText.innerText = "";
+            progressBar.style.width = "100%";
+            progressPercent.innerText = "100%";
             uploadStatus.innerText = "✅ Video published successfully!";
-            uploadStatus.classList.replace('text-blue-600', 'text-emerald-600');
-            
-            setTimeout(() => { uploadStatus.classList.add('hidden'); }, 4000);
+            uploadStatus.classList.remove('text-blue-600');
+            uploadStatus.classList.add('text-emerald-600');
 
-        } catch(error) {
+            setTimeout(() => {
+                uploadStatus.classList.add('hidden');
+                progressWrap.classList.add('hidden');
+            }, 4000);
+
+        } catch (error) {
             // Agar fail hua to screen par error text dikhega
             uploadStatus.innerText = "❌ Failed: " + error.message;
-            uploadStatus.classList.replace('text-blue-600', 'text-red-600');
+            uploadStatus.classList.remove('text-blue-600');
+            uploadStatus.classList.add('text-red-600');
             alert(error.message);
         }
 
