@@ -82,11 +82,12 @@
         </div>
     </div>
 
-    <!-- Quick Access Grid (Saare Purane Icons Wapas!) -->
+    <!-- Quick Access Grid (With Show More Logic) -->
     <div class="px-5 mt-8">
         <h2 class="text-base font-bold text-slate-800 mb-4 px-1">Quick Access</h2>
-        <div class="grid grid-cols-4 gap-y-5 gap-x-4">
+        <div class="grid grid-cols-4 gap-y-5 gap-x-4" id="quickAccessGrid">
             
+            <!-- 1. Live Class -->
             <div onclick="window.location.href='live-classes.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-red-500 text-xl">
                     <i class="fas fa-video"></i>
@@ -94,6 +95,7 @@
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Live Class</span>
             </div>
 
+            <!-- 2. Materials -->
             <div onclick="window.location.href='materials.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-blue-500 text-xl">
                     <i class="fas fa-book-open"></i>
@@ -101,6 +103,7 @@
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Materials</span>
             </div>
 
+            <!-- 3. Homework -->
             <div onclick="window.location.href='assignments.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer relative">
                 <span id="statAssignmentsBadge" class="absolute -top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border-2 border-slate-50 shadow-sm z-10">0</span>
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-emerald-500 text-xl">
@@ -109,6 +112,7 @@
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Homework</span>
             </div>
 
+            <!-- 4. Tests -->
             <div onclick="window.location.href='tests.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer relative">
                 <span id="statTestsBadge" class="absolute -top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border-2 border-slate-50 shadow-sm z-10">0</span>
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-purple-500 text-xl">
@@ -117,6 +121,7 @@
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Tests</span>
             </div>
 
+            <!-- 5. Results -->
             <div onclick="window.location.href='results.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-amber-500 text-xl">
                     <i class="fas fa-trophy"></i>
@@ -124,7 +129,7 @@
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Results</span>
             </div>
             
-            <!-- NAYA WAPAS LAYA: Fees -->
+            <!-- 6. Fees -->
             <div onclick="window.location.href='fees.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-teal-600 text-xl">
                     <i class="fas fa-wallet"></i>
@@ -132,46 +137,45 @@
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Fees</span>
             </div>
 
-            <!-- NAYA WAPAS LAYA: Leave -->
+            <!-- 7. Leave -->
             <div onclick="window.location.href='leave.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-green-600 text-xl">
                     <i class="fas fa-calendar-check"></i>
                 </div>
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Leave</span>
             </div>
-            <!-- NAYA: More / Show All Button -->
-<div id="viewAllBtn" onclick="showAllIcons()" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
-    <div class="w-14 h-14 rounded-[18px] bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 text-xl">
-        <i class="fas fa-ellipsis-h"></i>
-    </div>
-    <span class="text-[9.5px] font-bold text-slate-600 text-center">More</span>
-</div>
 
+            <!-- 8. More Button -->
+            <div id="viewAllBtn" onclick="showAllIcons()" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 text-xl transition hover:bg-slate-100">
+                    <i class="fas fa-ellipsis-h"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">More</span>
+            </div>
 
-            <div onclick="window.location.href='timetable.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+            <!-- HIDDEN EXTRA ICONS -->
+            <div onclick="window.location.href='timetable.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-indigo-500 text-xl">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Timetable</span>
             </div>
 
-            <div onclick="window.location.href='gallery.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+            <div onclick="window.location.href='gallery.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-pink-500 text-xl">
                     <i class="fas fa-images"></i>
                 </div>
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Gallery</span>
             </div>
 
-            <!-- NAYA WAPAS LAYA: Complaints / Helpdesk -->
-            <div onclick="window.location.href='complaints.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+            <div onclick="window.location.href='complaints.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-orange-500 text-xl">
                     <i class="fas fa-comment-dots"></i>
                 </div>
                 <span class="text-[9.5px] font-bold text-slate-600 text-center">Complaint</span>
             </div>
 
-            <!-- NAYA WAPAS LAYA: Feedback -->
-            <div onclick="window.location.href='feedback.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+            <div onclick="window.location.href='feedback.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-sky-500 text-xl">
                     <i class="fas fa-comment-alt"></i>
                 </div>
@@ -226,6 +230,18 @@
 
 </div>
 
+<!-- UI Toggle Logic -->
+<script>
+    window.showAllIcons = () => {
+        document.getElementById('viewAllBtn').classList.add('hidden');
+        const extraIcons = document.querySelectorAll('.extra-icon');
+        extraIcons.forEach(icon => {
+            icon.classList.remove('hidden');
+        });
+    };
+</script>
+
+<!-- Firebase Backend Logic -->
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
     import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
@@ -355,3 +371,5 @@
 </script>
 </body>
 </html>
+
+    
