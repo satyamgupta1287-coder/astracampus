@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Classes - AstraCampus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="pb-10">
+
+<div class="bg-emerald-600 text-white px-5 py-5 rounded-b-[24px] shadow-md flex items-center gap-4 sticky top-0 z-50">
+    <button onclick="window.location.href='dashboard.html'" class="text-white hover:text-emerald-200 transition text-lg active:scale-95">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    <h1 class="text-lg font-bold flex items-center gap-2">
+        <i class="fas fa-broadcast-tower animate-pulse"></i> Live Classes
+    </h1>
+</div>
+
+<div class="max-w-md mx-auto px-5 mt-6">
+    <h3 class="font-bold text-slate-800 mb-3 text-sm px-1 flex items-center gap-2">
+        <i class="fas fa-video text-slate-400"></i> Today's Schedule
+    </h3>
+    
+    <div id="liveContainer" class="space-y-4">
+        <div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center">
+            <p class="text-sm text-slate-400 font-medium"><i class="fas fa-spinner fa-spin mr-2"></i>Loading live classes...</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    const liveContainer = document.getElementById('liveContainer');
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                const { schoolId, class: studentClass } = userDoc.data();
+                
+                // Fetch Live Classes for this school and class
+                const q = query(collection(db, "liveClasses"), where("schoolId", "==", schoolId), where("targetClass", "==", String(studentClass)));
+                
+                onSnapshot(q, (snapshot) => {
+                    if(snapshot.empty) {
+                        liveContainer.innerHTML = `
+                            <div class="bg-white p-8 rounded-[20px] border text-center shadow-sm">
+                                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 text-2xl mx-auto mb-3"><i class="fas fa-mug-hot"></i></div>
+                                <p class="text-sm text-slate-500 font-bold">No Live Classes scheduled for now.</p>
+                                <p class="text-xs text-slate-400 mt-1">Enjoy your free time!</p>
+                            </div>`;
+                        return;
+                    }
+
+                    let classes = [];
+                    snapshot.forEach(d => classes.push(d.data()));
+                    classes.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                    liveContainer.innerHTML = "";
+                    classes.forEach(live => {
+                        liveContainer.innerHTML += `
+                            <div class="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] border border-emerald-100 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold px-3 py-1 rounded-bl-lg animate-pulse uppercase tracking-wide">
+                                    Live
+                                </div>
+                                <div class="flex items-center gap-3 mb-3 mt-1">
+                                    <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-lg shrink-0">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-sm leading-tight">${live.topic}</h4>
+                                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">${live.subject} • ${live.time}</p>
+                                    </div>
+                                </div>
+                                <a href="${live.meetingLink}" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md shadow-emerald-200 flex justify-center items-center gap-2 text-sm">
+                                    <i class="fas fa-video"></i> Join Live Class
+                                </a>
+                            </div>
+                        `;
+                    });
+                });
+            }
+        } else {
+            window.location.href = "../index.html";
+        }
+    });
+</script>
+</body>
+</html>
