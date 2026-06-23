@@ -13,14 +13,14 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Very light slate for premium feel */
+            background-color: #f8fafc; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Smooth shadow for cards */
+        /* Smooth shadow for white cards */
         .glass-card {
             background: #ffffff;
             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
@@ -32,7 +32,6 @@
             background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
         }
 
-        /* App-like click effect */
         .app-btn:active {
             transform: scale(0.95);
             transition: transform 0.1s;
@@ -43,6 +42,7 @@
 
 <div class="max-w-md mx-auto min-h-screen relative">
 
+    <!-- Top Header -->
     <div class="flex justify-between items-center px-6 pt-8 pb-2">
         <div>
             <p class="text-sm text-slate-500 font-medium" id="greetingMsg">Good Morning,</p>
@@ -53,6 +53,7 @@
         </div>
     </div>
 
+    <!-- Premium Dashboard Card -->
     <div class="px-5 mt-4">
         <div class="premium-gradient rounded-[24px] p-6 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-5 blur-2xl"></div>
@@ -81,22 +82,23 @@
         </div>
     </div>
 
+    <!-- Quick Access Grid (Saare Purane Icons Wapas!) -->
     <div class="px-5 mt-8">
         <h2 class="text-base font-bold text-slate-800 mb-4 px-1">Quick Access</h2>
-        <div class="grid grid-cols-4 gap-y-6 gap-x-4">
+        <div class="grid grid-cols-4 gap-y-5 gap-x-4">
             
             <div onclick="window.location.href='live-classes.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-red-500 text-xl">
                     <i class="fas fa-video"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Live Class</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Live Class</span>
             </div>
 
             <div onclick="window.location.href='materials.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-blue-500 text-xl">
                     <i class="fas fa-book-open"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Materials</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Materials</span>
             </div>
 
             <div onclick="window.location.href='assignments.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer relative">
@@ -104,7 +106,7 @@
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-emerald-500 text-xl">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Homework</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Homework</span>
             </div>
 
             <div onclick="window.location.href='tests.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer relative">
@@ -112,41 +114,67 @@
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-purple-500 text-xl">
                     <i class="fas fa-laptop-code"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Tests</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Tests</span>
             </div>
 
             <div onclick="window.location.href='results.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-amber-500 text-xl">
                     <i class="fas fa-trophy"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Results</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Results</span>
+            </div>
+            
+            <!-- NAYA WAPAS LAYA: Fees -->
+            <div onclick="window.location.href='fees.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-teal-600 text-xl">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Fees</span>
+            </div>
+
+            <!-- NAYA WAPAS LAYA: Leave -->
+            <div onclick="window.location.href='leave.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-green-600 text-xl">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Leave</span>
             </div>
 
             <div onclick="window.location.href='timetable.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-indigo-500 text-xl">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Timetable</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Timetable</span>
             </div>
 
             <div onclick="window.location.href='gallery.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
                 <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-pink-500 text-xl">
                     <i class="fas fa-images"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Gallery</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Gallery</span>
             </div>
 
+            <!-- NAYA WAPAS LAYA: Complaints / Helpdesk -->
             <div onclick="window.location.href='complaints.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
-                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-slate-700 text-xl">
-                    <i class="fas fa-headset"></i>
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-orange-500 text-xl">
+                    <i class="fas fa-comment-dots"></i>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600">Helpdesk</span>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Complaint</span>
+            </div>
+
+            <!-- NAYA WAPAS LAYA: Feedback -->
+            <div onclick="window.location.href='feedback.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-sky-500 text-xl">
+                    <i class="fas fa-comment-alt"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Feedback</span>
             </div>
 
         </div>
     </div>
 
-    <div class="px-5 mt-8">
+    <!-- Latest Announcement -->
+    <div class="px-5 mt-10">
         <div class="flex justify-between items-end mb-4 px-1">
             <h2 class="text-base font-bold text-slate-800">Notice Board</h2>
             <span onclick="window.location.href='notices.html'" class="text-[10px] font-bold text-indigo-600 uppercase tracking-wide cursor-pointer">View All</span>
@@ -158,6 +186,7 @@
         </div>
     </div>
 
+    <!-- Today's Classes -->
     <div class="px-5 mt-8 mb-6">
         <h2 class="text-base font-bold text-slate-800 mb-4 px-1">Today's Schedule</h2>
         <div id="scheduleContainer" class="space-y-3">
@@ -167,6 +196,7 @@
         </div>
     </div>
 
+    <!-- Clean Bottom Navigation -->
     <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-slate-100 flex justify-around items-center pt-3 pb-5 z-50 px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
         <button class="flex flex-col items-center gap-1.5 w-16 text-indigo-600">
             <i class="fas fa-home text-lg"></i>
@@ -278,15 +308,15 @@
                         let allNotices = [...snapshot.docs];
                         allNotices.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
                         
-                        const data = allNotices.data(); // Fixed Bug Here
+                        const data = allNotices[0].data(); 
                         noticeContainer.innerHTML = `
                             <div class="glass-card p-4 rounded-[20px] flex items-start gap-4 border-l-4 border-l-amber-400">
                                 <div class="w-10 h-10 rounded-[14px] bg-amber-50 flex items-center justify-center shrink-0 text-amber-500">
-                                    <i class="fas fa-bullhorn"></i>
+                                    <i class="fas fa-bullhorn text-lg"></i>
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-slate-800 text-sm mb-1">${data.title}</h4>
-                                    <p class="text-xs text-slate-600 leading-relaxed">${data.description}</p>
+                                    <p class="text-xs text-slate-600 leading-relaxed line-clamp-2">${data.description}</p>
                                 </div>
                             </div>
                         `;
