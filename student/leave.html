@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply Leave - AstraCampus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="pb-10">
+
+<div class="bg-green-600 text-white px-5 py-5 rounded-b-[24px] shadow-md flex items-center gap-4 sticky top-0 z-50">
+    <button onclick="window.location.href='dashboard.html'" class="text-white hover:text-green-100 transition text-lg active:scale-95">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    <h1 class="text-lg font-bold">Leave Application</h1>
+</div>
+
+<div class="max-w-md mx-auto px-5 mt-6">
+    <div class="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-8">
+        <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-calendar-plus text-green-500"></i> Request Leave</h2>
+        <form id="leaveForm" class="space-y-4" onsubmit="return false;">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">From Date</label>
+                    <input type="date" id="fromDate" required class="w-full p-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">To Date</label>
+                    <input type="date" id="toDate" required class="w-full p-2.5 text-sm border border-slate-200 rounded-xl outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-slate-50">
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Reason for Leave</label>
+                <textarea id="reason" rows="3" required placeholder="Type your reason here..." class="w-full p-3 text-sm border border-slate-200 rounded-xl outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-slate-50 resize-none"></textarea>
+            </div>
+            <p id="msgBox" class="text-xs font-bold text-center hidden"></p>
+            <button type="submit" id="submitBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition shadow-md shadow-green-200">
+                Submit Request
+            </button>
+        </form>
+    </div>
+
+    <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm px-1">
+        <i class="fas fa-history text-slate-400"></i> My Leave History
+    </h3>
+    <div id="historyContainer" class="space-y-3">
+        <div class="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 text-center">
+            <p class="text-sm text-slate-400 font-medium">Loading history...</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, addDoc, query, where, onSnapshot, getDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    let currentUserData = null;
+    const leaveForm = document.getElementById('leaveForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const historyContainer = document.getElementById('historyContainer');
+    const msgBox = document.getElementById('msgBox');
+
+    // Make sure 'From Date' is not in the past
+    document.getElementById('fromDate').min = new Date().toISOString().split("T");
+    document.getElementById('fromDate').addEventListener('change', (e) => {
+        document.getElementById('toDate').min = e.target.value;
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentUserData = { uid: user.uid, ...userDoc.data() };
+                
+                // Fetch History
+                const historyQuery = query(collection(db, "leaves"), where("studentId", "==", user.uid));
+                onSnapshot(historyQuery, (snapshot) => {
+                    let leaves = [];
+                    snapshot.forEach(d => leaves.push({id: d.id, ...d.data()}));
+                    leaves.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                    if(leaves.length === 0) {
+                        historyContainer.innerHTML = `<div class="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 text-center"><p class="text-sm text-slate-400 font-medium">No leave requests found.</p></div>`;
+                        return;
+                    }
+
+                    historyContainer.innerHTML = "";
+                    leaves.forEach(leave => {
+                        let statusColor = leave.status === 'Approved' ? 'bg-emerald-100 text-emerald-600' : (leave.status === 'Rejected' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600');
+                        historyContainer.innerHTML += `
+                            <div class="bg-white p-4 rounded-[16px] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.02)] border border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-slate-800 text-sm">${formatDate(leave.fromDate)} <i class="fas fa-arrow-right mx-1 text-[10px] text-slate-400"></i> ${formatDate(leave.toDate)}</p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">${leave.reason}</p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider ${statusColor}">${leave.status || 'Pending'}</span>
+                            </div>
+                        `;
+                    });
+                });
+            }
+        }
+    });
+
+    // Apply Leave
+    leaveForm.addEventListener('submit', async () => {
+        if(!currentUserData) return;
+        submitBtn.innerText = "Submitting..."; submitBtn.disabled = true;
+        
+        try {
+            await addDoc(collection(db, "leaves"), {
+                schoolId: currentUserData.schoolId,
+                studentId: currentUserData.uid,
+                studentName: currentUserData.name || currentUserData.firstName,
+                targetClass: String(currentUserData.class || ""),
+                fromDate: document.getElementById('fromDate').value,
+                toDate: document.getElementById('toDate').value,
+                reason: document.getElementById('reason').value,
+                status: "Pending",
+                createdAt: serverTimestamp()
+            });
+            leaveForm.reset();
+            showMessage("✅ Leave applied successfully!", "text-emerald-600");
+        } catch(err) {
+            showMessage("❌ Error: " + err.message, "text-red-500");
+        }
+        submitBtn.innerText = "Submit Request"; submitBtn.disabled = false;
+    });
+
+    function showMessage(msg, colorClass) {
+        msgBox.innerText = msg;
+        msgBox.className = `text-xs font-bold text-center block ${colorClass}`;
+        setTimeout(() => msgBox.classList.add('hidden'), 4000);
+    }
+    
+    function formatDate(dateStr) {
+        if(!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
+</script>
+</body>
+</html>
