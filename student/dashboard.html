@@ -336,27 +336,25 @@
                     }
                 });
 
-                // Attendance Load
-                const attQuery = query(collection(db, "attendance"), where("studentEmail", "==", user.email), where("schoolId", "==", schoolId));
+                                // D. Attendance Load (Smart Client-Side Filter)
+                const attQuery = query(collection(db, "attendance"), where("schoolId", "==", schoolId));
                 onSnapshot(attQuery, (snapshot) => {
                     let presentCount = 0;
-                    let totalCount = snapshot.docs.length;
+                    let totalCount = 0;
                     
                     snapshot.forEach(doc => {
-                        if(doc.data().status === 'present') presentCount++;
+                        const data = doc.data();
+                        // Yeh ID aur Email dono se check karega, koi error nahi aayega
+                        if(data.studentId === user.uid || data.studentEmail === user.email) {
+                            totalCount++;
+                            if(data.status === 'present') presentCount++;
+                        }
                     });
                     
                     let percentage = totalCount === 0 ? "N/A" : Math.round((presentCount / totalCount) * 100) + "%";
                     document.getElementById('statAttendance').innerText = percentage;
                 });
 
-            } else {
-                window.location.href = "../index.html"; 
-            }
-        } else {
-            window.location.href = "../index.html"; 
-        }
-    });
 
     // FIXED: Logout Button Logic Added Back
     document.getElementById('logoutBtn').addEventListener('click', async () => {
