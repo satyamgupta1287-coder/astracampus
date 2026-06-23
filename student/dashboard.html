@@ -233,7 +233,6 @@
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
     import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-    // FIXED: signOut added below
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const hour = new Date().getHours();
@@ -265,7 +264,7 @@
 
                 const targetClassStr = String(userData.class || "");
 
-                // Assignments
+                // Assignments Logic
                 const assignQuery = query(collection(db, "assignments"), where("schoolId", "==", schoolId));
                 onSnapshot(assignQuery, (snapshot) => {
                     let filteredAssigns = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
@@ -279,7 +278,7 @@
                     }
                 });
 
-                // Live Classes
+                // Live Classes Logic
                 const classQuery = query(collection(db, "live_classes"), where("schoolId", "==", schoolId));
                 onSnapshot(classQuery, (snapshot) => {
                     const scheduleContainer = document.getElementById('scheduleContainer');
@@ -311,7 +310,7 @@
                     }
                 });
 
-                // Notices
+                // Notices Logic
                 const noticeQuery = query(collection(db, "announcements"), where("schoolId", "==", schoolId));
                 onSnapshot(noticeQuery, (snapshot) => {
                     const noticeContainer = document.getElementById('announcementContainer');
@@ -336,7 +335,7 @@
                     }
                 });
 
-                                // D. Attendance Load (Smart Client-Side Filter)
+                // Attendance Logic (Perfectly Linked & Working)
                 const attQuery = query(collection(db, "attendance"), where("schoolId", "==", schoolId));
                 onSnapshot(attQuery, (snapshot) => {
                     let presentCount = 0;
@@ -344,7 +343,6 @@
                     
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        // Yeh ID aur Email dono se check karega, koi error nahi aayega
                         if(data.studentId === user.uid || data.studentEmail === user.email) {
                             totalCount++;
                             if(data.status === 'present') presentCount++;
@@ -355,8 +353,15 @@
                     document.getElementById('statAttendance').innerText = percentage;
                 });
 
+            } else {
+                window.location.href = "../index.html"; 
+            }
+        } else {
+            window.location.href = "../index.html"; 
+        }
+    });
 
-    // FIXED: Logout Button Logic Added Back
+    // Logout Functionality
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         if(confirm("Are you sure you want to log out?")) {
             try {
@@ -371,3 +376,5 @@
 </script>
 </body>
 </html>
+                    
+                    
