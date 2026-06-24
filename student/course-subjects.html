@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subjects - AstraCampus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }</style>
+</head>
+<body class="pb-10">
+
+<div class="bg-blue-600 text-white px-5 py-5 rounded-b-[24px] shadow-md flex items-center gap-4 sticky top-0 z-50">
+    <button onclick="window.location.href='courses.html'" class="text-white hover:text-blue-200 transition text-lg active:scale-95">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    <h1 id="pageTitle" class="text-lg font-bold flex items-center gap-2 truncate">
+        <i class="fas fa-book-open"></i> Subjects
+    </h1>
+</div>
+
+<div class="max-w-md mx-auto px-5 mt-6">
+    <h3 class="font-bold text-slate-800 mb-4 text-sm px-1 flex items-center gap-2">
+        <i class="fas fa-chalkboard text-slate-400"></i> Choose a Subject
+    </h3>
+
+    <div id="subjectContainer" class="space-y-3">
+        <div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center">
+            <p class="text-sm text-slate-400 font-medium"><i class="fas fa-spinner fa-spin mr-2"></i>Loading subjects...</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    const subjectContainer = document.getElementById('subjectContainer');
+    const pageTitle = document.getElementById('pageTitle');
+
+    const params = new URLSearchParams(window.location.search);
+    const selectedCourse = params.get('course');
+
+    if (!selectedCourse) {
+        window.location.href = "courses.html";
+    } else {
+        pageTitle.innerHTML = `<i class="fas fa-book-open"></i> <span class="truncate">${selectedCourse}</span>`;
+    }
+
+    const palette = [
+        { icon: 'fa-flask', bg: 'bg-blue-50', text: 'text-blue-600' },
+        { icon: 'fa-atom', bg: 'bg-purple-50', text: 'text-purple-600' },
+        { icon: 'fa-square-root-variable', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+        { icon: 'fa-graduation-cap', bg: 'bg-amber-50', text: 'text-amber-600' },
+        { icon: 'fa-microscope', bg: 'bg-rose-50', text: 'text-rose-600' },
+    ];
+
+    function showEmpty() {
+        subjectContainer.innerHTML = `
+            <div class="bg-white p-8 rounded-[20px] border text-center shadow-sm">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 text-2xl mx-auto mb-3"><i class="fas fa-video-slash"></i></div>
+                <p class="text-sm text-slate-500 font-bold">No subjects found for this course.</p>
+            </div>`;
+    }
+
+    function showError(message) {
+        subjectContainer.innerHTML = `
+            <div class="bg-red-50 p-6 rounded-[20px] border border-red-100 text-center">
+                <p class="text-xs text-red-500 font-bold break-words">${message}</p>
+            </div>`;
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = "../index.html";
+            return;
+        }
+
+        try {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (!userDoc.exists()) return showError("User profile not found in database.");
+
+            const userData = userDoc.data();
+            const schoolId = String(userData.schoolId || "").trim();
+            const studentClass = String(userData.class || "").trim();
+
+            const q = query(collection(db, "videos"), where("schoolId", "==", schoolId));
+
+            onSnapshot(
+                q,
+                (snapshot) => {
+                    // subject -> { teacherName, count } map banate hain, sirf is course + class ke videos se
+                    const subjectMap = new Map();
+                    snapshot.forEach((d) => {
+                        const data = d.data();
+                        if (
+                            String(data.targetClass || "").trim() === studentClass &&
+                            data.course === selectedCourse &&
+                            data.subject
+                        ) {
+                            const existing = subjectMap.get(data.subject) || { teacherName: data.teacherName || '', count: 0 };
+                            existing.count += 1;
+                            if (!existing.teacherName && data.teacherName) existing.teacherName = data.teacherName;
+                            subjectMap.set(data.subject, existing);
+                        }
+                    });
+
+                    if (subjectMap.size === 0) return showEmpty();
+
+                    const subjects = Array.from(subjectMap.keys()).sort();
+
+                    subjectContainer.innerHTML = "";
+                    subjects.forEach((subject, i) => {
+                        const style = palette[i % palette.length];
+                        const info = subjectMap.get(subject);
+                        const encodedCourse = encodeURIComponent(selectedCourse);
+                        const encodedSubject = encodeURIComponent(subject);
+                        subjectContainer.innerHTML += `
+                            <div onclick="window.location.href='live-classes.html?course=${encodedCourse}&subject=${encodedSubject}'" 
+                                 class="bg-white rounded-[20px] shadow-sm border border-slate-100 p-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition">
+                                <div class="w-12 h-12 ${style.bg} ${style.text} rounded-2xl flex items-center justify-center text-lg shrink-0">
+                                    <i class="fas ${style.icon}"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-slate-800 text-sm truncate">${subject}</h4>
+                                    <p class="text-[11px] text-slate-400 font-medium truncate">
+                                        ${info.teacherName ? `<i class="fas fa-user mr-1"></i>${info.teacherName} &middot; ` : ''}${info.count} video${info.count > 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                                <i class="fas fa-chevron-right text-slate-300 text-sm"></i>
+                            </div>
+                        `;
+                    });
+                },
+                (error) => showError("Error loading subjects: " + error.message)
+            );
+        } catch (err) {
+            showError("Error: " + err.message);
+        }
+    });
+</script>
+</body>
+</html>
