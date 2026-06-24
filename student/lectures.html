@@ -33,27 +33,51 @@
     </div>
 </div>
 
+<div id="videoModal" class="fixed inset-0 z- bg-black hidden flex-col w-full h-full">
+    <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
+        <h3 id="modalTitle" class="text-white font-bold text-sm truncate pr-4">Lecture Video</h3>
+        <button onclick="closeVideo()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white flex items-center justify-center transition active:scale-90 shadow-lg border border-white/30">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+    </div>
+    <div class="flex-grow flex items-center justify-center relative w-full h-full" id="modalPlayerContainer">
+        </div>
+</div>
+
 <script type="module">
     import { auth, db } from '../js/firebase-init.js'; 
     import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const videoContainer = document.getElementById('videoContainer');
+    const videoModal = document.getElementById('videoModal');
+    const modalPlayerContainer = document.getElementById('modalPlayerContainer');
+    const modalTitle = document.getElementById('modalTitle');
 
-    // 🌟 MAGIC FUNCTION: Click karne par Video Load karega
-    window.startVideo = function(divId, wistiaId) {
-        const container = document.getElementById(`vid-${divId}`);
-        container.onclick = null; // Double click roke
+    // 🌟 MAGIC FUNCTION 1: Popup Open karega aur Video chalayega
+    window.startVideo = function(wistiaId, title) {
+        modalTitle.innerText = title;
+        videoModal.classList.remove('hidden');
+        videoModal.classList.add('flex');
         
-        // Thumbnail ko hata kar Wistia Iframe daal dega aur autoPlay karega
-        container.innerHTML = `
-            <iframe src="https://fast.wistia.net/embed/iframe/${wistiaId}?videoFoam=true&autoPlay=true" 
-                    title="Lecture Video" 
-                    allowtransparency="true" frameborder="0" scrolling="no" 
-                    class="absolute top-0 left-0 w-full h-full" 
-                    name="wistia_embed" allowfullscreen mozallowfullscreen webkitallowfullscreen oallowfullscreen msallowfullscreen>
-            </iframe>
+        // Iframe mein saare controls (playbar, fullscreen) on kar diye hain
+        modalPlayerContainer.innerHTML = `
+            <div class="w-full relative" style="padding-top: 56.25%;">
+                <iframe src="https://fast.wistia.net/embed/iframe/${wistiaId}?videoFoam=true&autoPlay=true&controlsVisibleOnLoad=true&playbar=true&fullscreenButton=true" 
+                        title="${title}" 
+                        allowtransparency="true" frameborder="0" scrolling="no" 
+                        class="absolute top-0 left-0 w-full h-full" 
+                        name="wistia_embed" allowfullscreen mozallowfullscreen webkitallowfullscreen oallowfullscreen msallowfullscreen>
+                </iframe>
+            </div>
         `;
+    };
+
+    // 🌟 MAGIC FUNCTION 2: Popup Close karega aur Video band karega
+    window.closeVideo = function() {
+        videoModal.classList.add('hidden');
+        videoModal.classList.remove('flex');
+        modalPlayerContainer.innerHTML = ""; // Isse video ka audio bhi turant band ho jayega
     };
 
     function showEmpty(studentClass) {
@@ -102,11 +126,13 @@
 
                     videoContainer.innerHTML = "";
                     videos.forEach((video) => {
-                        // 🌟 PREMIUM UI CARD GENERATION
+                        // Title me agar single quote (') ho to code na tute, isliye replace kiya
+                        const safeTitle = video.title.replace(/'/g, "\\'"); 
+
                         videoContainer.innerHTML += `
                             <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden mb-5">
                                 
-                                <div id="vid-${video.id}" class="w-full relative bg-slate-900 cursor-pointer group" style="padding-top: 56.25%;" onclick="startVideo('${video.id}', '${video.wistiaId}')">
+                                <div onclick="startVideo('${video.wistiaId}', '${safeTitle}')" class="w-full relative bg-slate-900 cursor-pointer group" style="padding-top: 56.25%;">
                                     
                                     <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" class="absolute inset-0 w-full h-full object-cover opacity-90 group-active:opacity-100 transition">
                                     
@@ -121,7 +147,6 @@
                                             <i class="fas fa-play text-xl ml-1"></i>
                                         </div>
                                     </div>
-                                    
                                 </div>
 
                                 <div class="p-4 flex justify-between items-center">
