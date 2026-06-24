@@ -159,12 +159,10 @@
     let allVideos = [];
     let allCourseMeta = {};
 
-    // 🌟 APP STATE
-    let currentStep = 1; // 1: Course, 2: Subject, 3: Upload
+    let currentStep = 1; 
     let activeCourse = "";
     let activeSubject = "";
 
-    // Upload Data State
     let newCoursePhotoUrl = "";
     let notesUrl = "";
     let testUrl = "";
@@ -174,11 +172,14 @@
     const headerTitle = document.getElementById('headerTitle');
     const headerPath = document.getElementById('headerPath');
 
-    // Anti-Undefined AutoFill
+    // 🌟 GARBAGE CLEANER: memory me se 'undefined' ko completely block karna
     function getSafeStorage(key) {
-        const val = localStorage.getItem(key);
-        return (val && val !== 'undefined' && val !== 'null') ? val : '';
+        let val = localStorage.getItem(key);
+        if (!val || val === 'undefined' || val === 'null' || val.trim() === '') return '';
+        return val.trim();
     }
+    
+    // Page load hone par safe data bharna
     document.getElementById('teacherName').value = getSafeStorage('ast_teacher');
     document.getElementById('targetClass').value = getSafeStorage('ast_class');
 
@@ -188,7 +189,7 @@
         return mb >= 1 ? mb.toFixed(1) + " MB" : (bytes / 1024).toFixed(0) + " KB";
     }
 
-    // 🌟 CLOUDINARY WIDGETS
+    // CLOUDINARY WIDGETS
     const coursePhotoWidget = cloudinary.createUploadWidget({ cloudName: 'dl1cddemu', uploadPreset: 'upload', resourceType: 'image' }, (e, r) => {
         if (!e && r && r.event === "success") {
             newCoursePhotoUrl = r.info.secure_url || "";
@@ -215,7 +216,6 @@
     });
     document.getElementById('testBtn').addEventListener('click', () => testWidget.open());
 
-    // File Input UI
     const fileInput = document.getElementById('videoFile');
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files;
@@ -230,7 +230,6 @@
         }
     });
 
-    // 🌟 INIT
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const adminDoc = await getDoc(doc(db, "users", user.uid));
@@ -242,23 +241,36 @@
     });
 
     function fetchDatabase() {
-        // Fetch Course Meta (Photos)
         onSnapshot(query(collection(db, "courseMeta"), where("schoolId", "==", adminSchoolId)), (snap) => {
             allCourseMeta = {};
             snap.forEach(d => { allCourseMeta[d.data().course] = d.data().photoUrl; });
             updateUI();
         });
 
-        // Fetch All Videos
         onSnapshot(query(collection(db, "videos"), where("schoolId", "==", adminSchoolId)), (snap) => {
             allVideos = [];
-            snap.forEach(d => allVideos.push({ id: d.id, ...d.data() }));
+            snap.forEach(d => {
+                const data = d.data();
+                // 🌟 FIREBASE CLEANER: Agar firebase me purana 'undefined' pada hai, to use UI me mat dikhao
+                const cleanData = {
+                    id: d.id,
+                    course: data.course === 'undefined' ? '' : data.course,
+                    subject: data.subject === 'undefined' ? '' : data.subject,
+                    targetClass: data.targetClass === 'undefined' ? '' : data.targetClass,
+                    teacherName: data.teacherName === 'undefined' ? '' : data.teacherName,
+                    title: data.title === 'undefined' ? 'Untitled' : data.title,
+                    wistiaId: data.wistiaId,
+                    notesUrl: data.notesUrl,
+                    testUrl: data.testUrl,
+                    createdAt: data.createdAt
+                };
+                allVideos.push(cleanData);
+            });
             allVideos.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
             updateUI();
         });
     }
 
-    // 🌟 NAVIGATION & UI RENDERER
     function updateUI() {
         document.getElementById('view-courses').classList.add('hidden');
         document.getElementById('view-subjects').classList.add('hidden');
@@ -292,11 +304,10 @@
         else { window.location.href = 'teacher-dashboard.html'; }
     };
 
-    // 🌟 STEP 1: RENDER COURSES
     function renderCourses() {
         const cList = document.getElementById('courseList');
         const courseSet = new Set(Object.keys(allCourseMeta));
-        allVideos.forEach(v => { if(v.course) courseSet.add(v.course); });
+        allVideos.forEach(v => { if(v.course && v.course.trim() !== "") courseSet.add(v.course); });
         
         const courses = Array.from(courseSet).sort();
         if (courses.length === 0) {
@@ -321,11 +332,10 @@
     }
     window.selectCourse = (cName) => { activeCourse = cName; currentStep = 2; updateUI(); };
 
-    // 🌟 STEP 2: RENDER SUBJECTS
     function renderSubjects() {
         const sList = document.getElementById('subjectList');
         const subjSet = new Set();
-        allVideos.forEach(v => { if(v.course === activeCourse && v.subject) subjSet.add(v.subject); });
+        allVideos.forEach(v => { if(v.course === activeCourse && v.subject && v.subject.trim() !== "") subjSet.add(v.subject); });
         
         const subjects = Array.from(subjSet).sort();
         if (subjects.length === 0) {
@@ -348,7 +358,6 @@
     }
     window.selectSubject = (sName) => { activeSubject = sName; currentStep = 3; updateUI(); };
 
-    // 🌟 STEP 3: RENDER VIDEOS (FILTERED)
     function renderVideos() {
         const vList = document.getElementById('videoListContainer');
         const filteredVideos = allVideos.filter(v => v.course === activeCourse && v.subject === activeSubject);
@@ -363,13 +372,15 @@
         vList.innerHTML = "";
         filteredVideos.forEach(video => {
             const safeTitle = (video.title || "Untitled").replace(/'/g, "\\'");
+            const safeClassBadge = video.targetClass ? `<span class="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded-full">Class ${video.targetClass}</span>` : '';
+            
             vList.innerHTML += `
                 <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 flex items-center gap-3 p-3">
                     <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" class="w-24 h-16 rounded-xl object-cover bg-slate-200 shrink-0">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-slate-800 text-xs mb-1 truncate">${safeTitle}</h4>
                         <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded-full">Class ${video.targetClass}</span>
+                            ${safeClassBadge}
                             ${video.notesUrl ? `<span class="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded-full"><i class="fas fa-file-pdf"></i></span>` : ''}
                             ${video.testUrl ? `<span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full"><i class="fas fa-file-alt"></i></span>` : ''}
                         </div>
@@ -379,12 +390,12 @@
         });
     }
 
-    // 🌟 MODALS LOGIC
+    // MODALS LOGIC
     window.openCourseModal = () => { document.getElementById('courseModal').classList.remove('hidden'); document.getElementById('courseModal').classList.add('flex'); };
     window.closeCourseModal = () => { document.getElementById('courseModal').classList.add('hidden'); document.getElementById('courseModal').classList.remove('flex'); };
     window.saveNewCourse = async () => {
         const cName = document.getElementById('newCourseName').value.trim();
-        if(!cName) return alert("Enter course name!");
+        if(!cName || cName.toLowerCase() === 'undefined') return alert("Enter valid course name!");
         if(newCoursePhotoUrl) {
             const metaId = `${adminSchoolId}_${cName}`.replace(/\s+/g, '_').toLowerCase();
             await setDoc(doc(db, "courseMeta", metaId), { schoolId: adminSchoolId, course: cName, photoUrl: newCoursePhotoUrl }, { merge: true });
@@ -400,7 +411,7 @@
     window.closeSubjectModal = () => { document.getElementById('subjectModal').classList.add('hidden'); document.getElementById('subjectModal').classList.remove('flex'); };
     window.saveNewSubject = () => {
         const sName = document.getElementById('newSubjectName').value.trim();
-        if(!sName) return alert("Enter subject name!");
+        if(!sName || sName.toLowerCase() === 'undefined') return alert("Enter valid subject name!");
         closeSubjectModal();
         selectSubject(sName);
     };
@@ -409,7 +420,6 @@
     window.closeDeleteModal = () => { pendingDeleteId = null; document.getElementById('deleteModal').classList.add('hidden'); document.getElementById('deleteModal').classList.remove('flex'); };
     window.confirmDelete = async () => { if(pendingDeleteId) { await deleteDoc(doc(db, "videos", pendingDeleteId)); closeDeleteModal(); } };
 
-    // 🌟 WISTIA UPLOAD
     function uploadWithProgress(formData, totalBytes) {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
@@ -423,8 +433,8 @@
                     document.getElementById('progressBytes').innerText = `${formatBytes(e.loaded)} / ${formatBytes(e.total)}`;
                 }
             };
-            xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText)); else reject(new Error(xhr.responseText)); };
-            xhr.onerror = () => reject(new Error("Network error"));
+            xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText)); else reject(new Error("Wistia Error: Check API Key or Limits")); };
+            xhr.onerror = () => reject(new Error("Network connection error"));
             xhr.send(formData);
         });
     }
@@ -433,9 +443,14 @@
         const file = fileInput.files;
         if (!file) return alert("Select video file!");
 
-        const title = document.getElementById('title').value.trim() || "Untitled";
-        const teacherName = document.getElementById('teacherName').value.trim() || "";
-        const targetClass = document.getElementById('targetClass').value.trim() || "";
+        let title = document.getElementById('title').value.trim() || "Untitled";
+        let teacherName = document.getElementById('teacherName').value.trim();
+        let targetClass = document.getElementById('targetClass').value.trim();
+
+        // Agar kisi ne jaan-bujhkar form me 'undefined' type kar diya, to block karo
+        if(title.toLowerCase() === 'undefined') title = 'Untitled';
+        if(teacherName.toLowerCase() === 'undefined') teacherName = '';
+        if(targetClass.toLowerCase() === 'undefined') targetClass = '';
 
         localStorage.setItem('ast_teacher', teacherName);
         localStorage.setItem('ast_class', targetClass);
@@ -448,7 +463,7 @@
         sBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
         uStatus.classList.remove('hidden', 'text-emerald-600', 'text-red-600');
         uStatus.classList.add('text-blue-600');
-        uStatus.innerText = "Please wait, uploading video...";
+        uStatus.innerText = "Please wait, uploading video... (Do not close app)";
         pWrap.classList.remove('hidden');
 
         try {
@@ -457,11 +472,12 @@
             formData.append('name', title);
 
             const wistiaData = await uploadWithProgress(formData, file.size);
+            if (!wistiaData || !wistiaData.hashed_id) throw new Error("Video ID not received from Wistia server.");
             
             await addDoc(collection(db, "videos"), {
-                schoolId: adminSchoolId,
-                course: activeCourse,       // 🌟 Auto-filled from Step 1
-                subject: activeSubject,     // 🌟 Auto-filled from Step 2
+                schoolId: adminSchoolId || "UNKNOWN",
+                course: activeCourse,      
+                subject: activeSubject,    
                 teacherName: teacherName,
                 targetClass: targetClass,
                 title: title,
@@ -471,6 +487,7 @@
                 createdAt: serverTimestamp()
             });
 
+            // Input fields wapas khali karo
             document.getElementById('title').value = '';
             fileInput.value = '';
             document.getElementById('fileNameText').innerText = "Tap to select video (.mp4)";
