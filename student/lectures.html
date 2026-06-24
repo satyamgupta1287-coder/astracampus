@@ -34,26 +34,39 @@
 </div>
 
 <script type="module">
-    // Yahan humne path fix kar diya hai (../js/firebase-init.js)
     import { auth, db } from '../js/firebase-init.js'; 
     import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     const videoContainer = document.getElementById('videoContainer');
 
+    // 🌟 MAGIC FUNCTION: Click karne par Video Load karega
+    window.startVideo = function(divId, wistiaId) {
+        const container = document.getElementById(`vid-${divId}`);
+        container.onclick = null; // Double click roke
+        
+        // Thumbnail ko hata kar Wistia Iframe daal dega aur autoPlay karega
+        container.innerHTML = `
+            <iframe src="https://fast.wistia.net/embed/iframe/${wistiaId}?videoFoam=true&autoPlay=true" 
+                    title="Lecture Video" 
+                    allowtransparency="true" frameborder="0" scrolling="no" 
+                    class="absolute top-0 left-0 w-full h-full" 
+                    name="wistia_embed" allowfullscreen mozallowfullscreen webkitallowfullscreen oallowfullscreen msallowfullscreen>
+            </iframe>
+        `;
+    };
+
     function showEmpty(studentClass) {
         videoContainer.innerHTML = `
             <div class="bg-white p-8 rounded-[20px] border text-center shadow-sm">
                 <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 text-2xl mx-auto mb-3"><i class="fas fa-video-slash"></i></div>
                 <p class="text-sm text-slate-500 font-bold">No lectures uploaded for Class ${studentClass} yet.</p>
-                <p class="text-xs text-slate-400 mt-2">Agar class ${studentClass} ka video upload kiya hai aur nahi dikh raha, toh admin se school ID check karwao.</p>
             </div>`;
     }
 
     function showError(message) {
         videoContainer.innerHTML = `
             <div class="bg-red-50 p-6 rounded-[20px] border border-red-100 text-center">
-                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-400 text-xl mx-auto mb-3"><i class="fas fa-exclamation-triangle"></i></div>
                 <p class="text-xs text-red-500 font-bold break-words">${message}</p>
             </div>`;
     }
@@ -66,72 +79,63 @@
 
         try {
             const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (!userDoc.exists()) {
-                showError("User profile not found in database.");
-                return;
-            }
+            if (!userDoc.exists()) return showError("User profile not found in database.");
 
             const userData = userDoc.data();
             const schoolId = String(userData.schoolId || "").trim();
             const studentClass = String(userData.class || "").trim();
 
-            if (!schoolId || !studentClass) {
-                showError("Aapki profile mein School ID ya Class missing hai.");
-                return;
-            }
-
             const q = query(collection(db, "videos"), where("schoolId", "==", schoolId));
 
-            onSnapshot(
-                q,
-                (snapshot) => {
+            onSnapshot(q, (snapshot) => {
                     let videos = [];
                     snapshot.forEach((d) => {
                         const data = d.data();
-                        const videoTargetClass = String(data.targetClass || "").trim();
-                        
-                        if (videoTargetClass === studentClass) {
+                        if (String(data.targetClass || "").trim() === studentClass) {
                             videos.push({ id: d.id, ...data });
                         }
                     });
 
-                    if (videos.length === 0) {
-                        showEmpty(studentClass);
-                        return;
-                    }
+                    if (videos.length === 0) return showEmpty(studentClass);
 
                     videos.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
                     videoContainer.innerHTML = "";
                     videos.forEach((video) => {
+                        // 🌟 PREMIUM UI CARD GENERATION
                         videoContainer.innerHTML += `
-                            <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden">
-                                <div class="w-full bg-black relative" style="padding-top: 56.25%;">
-                                    <iframe src="https://fast.wistia.net/embed/iframe/${video.wistiaId}?videoFoam=true" 
-                                            title="${video.title}" 
-                                            allowtransparency="true" frameborder="0" scrolling="no" 
-                                            class="wistia_embed absolute top-0 left-0 w-full h-full" 
-                                            name="wistia_embed" allowfullscreen mozallowfullscreen webkitallowfullscreen oallowfullscreen msallowfullscreen>
-                                    </iframe>
-                                </div>
-                                <div class="p-4 flex items-center justify-between gap-3">
-                                    <div>
-                                        <div class="flex items-center gap-2 mb-1.5">
-                                            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">${video.subject}</span>
+                            <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden mb-5">
+                                
+                                <div id="vid-${video.id}" class="w-full relative bg-slate-900 cursor-pointer group" style="padding-top: 56.25%;" onclick="startVideo('${video.id}', '${video.wistiaId}')">
+                                    
+                                    <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" class="absolute inset-0 w-full h-full object-cover opacity-90 group-active:opacity-100 transition">
+                                    
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20"></div>
+                                    
+                                    <div class="absolute top-3 left-3 bg-blue-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                                        ${video.subject}
+                                    </div>
+
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center text-white shadow-xl transition transform group-active:scale-90">
+                                            <i class="fas fa-play text-xl ml-1"></i>
                                         </div>
-                                        <h4 class="font-bold text-slate-800 text-sm leading-tight">${video.title}</h4>
                                     </div>
-                                    <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
-                                        <i class="fas fa-play"></i>
+                                    
+                                </div>
+
+                                <div class="p-4 flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-sm leading-tight mb-1">${video.title}</h4>
+                                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wide"><i class="fas fa-chalkboard-teacher mr-1"></i> Class ${video.targetClass}</p>
                                     </div>
                                 </div>
+
                             </div>
                         `;
                     });
                 },
-                (error) => {
-                    showError("Error loading videos: " + error.message);
-                }
+                (error) => showError("Error loading videos: " + error.message)
             );
         } catch (err) {
             showError("Error: " + err.message);
