@@ -7,8 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }</style>
-    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        #videoModal.flex { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #modalCard { animation: slideUp 0.25s ease-out; }
+        @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
     <script src="https://fast.wistia.net/assets/external/E-v1.js" async></script>
 </head>
 <body class="pb-10">
@@ -26,7 +31,7 @@
     <h3 class="font-bold text-slate-800 mb-4 text-sm px-1 flex items-center gap-2">
         <i class="fas fa-book-open text-slate-400"></i> Your Video Classes
     </h3>
-    
+
     <div id="videoContainer" class="space-y-5">
         <div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center">
             <p class="text-sm text-slate-400 font-medium"><i class="fas fa-spinner fa-spin mr-2"></i>Loading videos...</p>
@@ -34,21 +39,30 @@
     </div>
 </div>
 
-<div id="videoModal" class="fixed inset-0 z- bg-black hidden flex-col w-full h-full justify-center">
-    
-    <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z- bg-gradient-to-b from-black/80 to-transparent">
-        <h3 id="modalTitle" class="text-white font-bold text-sm truncate pr-4">Lecture Video</h3>
-        <button onclick="closeVideo()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-white flex items-center justify-center transition active:scale-90 shadow-lg border border-white/30">
-            <i class="fas fa-times text-xl"></i>
-        </button>
-    </div>
-    
-    <div class="w-full relative px-0" id="modalPlayerContainer">
+<!-- Polished Video Modal -->
+<div id="videoModal" class="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm hidden flex-col items-center justify-center px-4">
+    <div id="modalCard" class="w-full max-w-md bg-slate-900 rounded-[20px] overflow-hidden shadow-2xl">
+
+        <!-- Header bar -->
+        <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-white/10">
+            <h3 id="modalTitle" class="text-white font-bold text-sm truncate pr-3">Lecture Video</h3>
+            <button onclick="closeVideo()" class="w-9 h-9 shrink-0 bg-white/10 hover:bg-white/20 rounded-full text-white flex items-center justify-center transition active:scale-90">
+                <i class="fas fa-times text-base"></i>
+            </button>
         </div>
+
+        <!-- Player area -->
+        <div class="w-full relative bg-black" id="modalPlayerContainer" style="aspect-ratio: 16/9;">
+            <div class="absolute inset-0 flex items-center justify-center text-white/60 text-xs">
+                <i class="fas fa-spinner fa-spin mr-2"></i> Loading player...
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script type="module">
-    import { auth, db } from '../js/firebase-init.js'; 
+    import { auth, db } from '../js/firebase-init.js';
     import { collection, query, where, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
@@ -57,28 +71,29 @@
     const modalPlayerContainer = document.getElementById('modalPlayerContainer');
     const modalTitle = document.getElementById('modalTitle');
 
-    // 🌟 100% WISTIA PLAYER FIX
-    window.startVideo = function(wistiaId, title) {
+    window.startVideo = function (wistiaId, title) {
         modalTitle.innerText = title;
         videoModal.classList.remove('hidden');
         videoModal.classList.add('flex');
-        
-        // Iframe hata kar Div + playsinline=true laga diya gaya hai!
+        document.body.style.overflow = 'hidden';
+
         modalPlayerContainer.innerHTML = `
-            <div class="wistia_responsive_padding" style="padding:56.25% 0 0 0;position:relative;">
-                <div class="wistia_responsive_wrapper" style="height:100%;left:0;position:absolute;top:0;width:100%;">
-                    <div class="wistia_embed wistia_async_${wistiaId} seo=false videoFoam=true autoPlay=true playsinline=true" style="height:100%;position:relative;width:100%">
-                    </div>
-                </div>
+            <div class="wistia_embed wistia_async_${wistiaId} seo=false videoFoam=false autoPlay=true playsinline=true" style="height:100%;width:100%;position:relative;">
             </div>
         `;
     };
 
-    window.closeVideo = function() {
+    window.closeVideo = function () {
         videoModal.classList.add('hidden');
         videoModal.classList.remove('flex');
-        modalPlayerContainer.innerHTML = ""; 
+        modalPlayerContainer.innerHTML = "";
+        document.body.style.overflow = '';
     };
+
+    // Tap outside the card closes the modal
+    videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) closeVideo();
+    });
 
     function showEmpty(studentClass) {
         videoContainer.innerHTML = `
@@ -111,7 +126,9 @@
 
             const q = query(collection(db, "videos"), where("schoolId", "==", schoolId));
 
-            onSnapshot(q, (snapshot) => {
+            onSnapshot(
+                q,
+                (snapshot) => {
                     let videos = [];
                     snapshot.forEach((d) => {
                         const data = d.data();
@@ -126,15 +143,15 @@
 
                     videoContainer.innerHTML = "";
                     videos.forEach((video) => {
-                        const safeTitle = video.title.replace(/'/g, "\\'"); 
+                        const safeTitle = (video.title || "Untitled").replace(/'/g, "\\'");
 
                         videoContainer.innerHTML += `
                             <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden mb-5">
-                                
-                                <div onclick="startVideo('${video.wistiaId}', '${safeTitle}')" class="w-full relative bg-slate-900 cursor-pointer group" style="padding-top: 56.25%;">
+
+                                <div onclick="startVideo('${video.wistiaId}', '${safeTitle}')" class="w-full relative bg-slate-900 cursor-pointer group" style="aspect-ratio: 16/9;">
                                     <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" class="absolute inset-0 w-full h-full object-cover opacity-90 group-active:opacity-100 transition">
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20"></div>
-                                    
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10"></div>
+
                                     <div class="absolute top-3 left-3 bg-blue-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                                         ${video.subject}
                                     </div>
