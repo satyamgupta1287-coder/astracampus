@@ -39,25 +39,19 @@
     </div>
 </div>
 
-<!-- Polished Video Modal -->
-<div id="videoModal" class="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm hidden flex-col items-center justify-center px-4">
+<div id="videoModal" class="fixed inset-0 z- bg-black/80 backdrop-blur-sm hidden flex-col items-center justify-center px-4">
     <div id="modalCard" class="w-full max-w-md bg-slate-900 rounded-[20px] overflow-hidden shadow-2xl">
-
-        <!-- Header bar -->
         <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-white/10">
             <h3 id="modalTitle" class="text-white font-bold text-sm truncate pr-3">Lecture Video</h3>
             <button onclick="closeVideo()" class="w-9 h-9 shrink-0 bg-white/10 hover:bg-white/20 rounded-full text-white flex items-center justify-center transition active:scale-90">
                 <i class="fas fa-times text-base"></i>
             </button>
         </div>
-
-        <!-- Player area -->
         <div class="w-full relative bg-black" id="modalPlayerContainer" style="aspect-ratio: 16/9;">
             <div class="absolute inset-0 flex items-center justify-center text-white/60 text-xs">
                 <i class="fas fa-spinner fa-spin mr-2"></i> Loading player...
             </div>
         </div>
-
     </div>
 </div>
 
@@ -97,7 +91,6 @@
             </div>
         `;
 
-        // Jab Wistia player fullscreen mein jaaye, to landscape orientation lock try karo
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     };
@@ -105,11 +98,8 @@
     function handleFullscreenChange() {
         const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
         if (isFullscreen) {
-            // Mobile browsers (Chrome Android) par landscape lock supported hota hai
             if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('landscape').catch(() => {
-                    // Kuch browsers (jaise iOS Safari) lock support nahi karte - silently ignore
-                });
+                screen.orientation.lock('landscape').catch(() => {});
             }
         } else {
             if (screen.orientation && screen.orientation.unlock) {
@@ -130,7 +120,6 @@
         }
     };
 
-    // Tap outside the card closes the modal
     videoModal.addEventListener('click', (e) => {
         if (e.target === videoModal) closeVideo();
     });
@@ -189,6 +178,19 @@
                     videos.forEach((video) => {
                         const safeTitle = (video.title || "Untitled").replace(/'/g, "\\'");
 
+                        // 🌟 PDF Buttons Logic: Agar URL hoga tabhi button dikhega
+                        let actionButtonsHtml = "";
+                        if (video.notesUrl || video.testUrl) {
+                            actionButtonsHtml = `<div class="px-4 pb-4 flex gap-2 border-t border-slate-50 pt-3 mt-1">`;
+                            if (video.notesUrl) {
+                                actionButtonsHtml += `<a href="${video.notesUrl}" target="_blank" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-[11px] font-bold py-2 rounded-xl flex justify-center items-center gap-1.5 transition active:scale-95"><i class="fas fa-file-pdf"></i> Class Notes</a>`;
+                            }
+                            if (video.testUrl) {
+                                actionButtonsHtml += `<a href="${video.testUrl}" target="_blank" class="flex-1 bg-purple-50 hover:bg-purple-100 text-purple-600 text-[11px] font-bold py-2 rounded-xl flex justify-center items-center gap-1.5 transition active:scale-95"><i class="fas fa-file-alt"></i> DPP / Test</a>`;
+                            }
+                            actionButtonsHtml += `</div>`;
+                        }
+
                         videoContainer.innerHTML += `
                             <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden mb-5">
 
@@ -207,7 +209,7 @@
                                     </div>
                                 </div>
 
-                                <div class="p-4 flex justify-between items-center">
+                                <div class="p-4 flex justify-between items-center pb-2">
                                     <div>
                                         <h4 class="font-bold text-slate-800 text-sm leading-tight mb-1">${video.title}</h4>
                                         <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wide">
@@ -215,6 +217,8 @@
                                         </p>
                                     </div>
                                 </div>
+
+                                ${actionButtonsHtml}
 
                             </div>
                         `;
