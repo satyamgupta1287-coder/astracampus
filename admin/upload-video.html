@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Video Upload - Admin</title>
+    <title>Manage Batches & Videos - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,110 +12,136 @@
 </head>
 <body class="pb-10">
 
-<div class="bg-blue-800 text-white px-5 py-5 rounded-b-[24px] shadow-md flex items-center gap-4 sticky top-0 z-50">
-    <button onclick="window.location.href='teacher-dashboard.html'" class="text-white hover:text-blue-200 transition text-lg active:scale-95">
+<div class="bg-blue-800 text-white px-5 py-4 rounded-b-[24px] shadow-md flex items-center gap-4 sticky top-0 z-50">
+    <button id="backBtn" class="text-white hover:text-blue-200 transition text-lg active:scale-95">
         <i class="fas fa-arrow-left"></i>
     </button>
-    <h1 class="text-lg font-bold">Direct Video Upload</h1>
+    <div class="flex-1 min-w-0">
+        <h1 class="text-base font-bold truncate" id="headerTitle">Manage Courses</h1>
+        <p class="text-[10px] text-blue-200 font-medium truncate uppercase tracking-wider" id="headerPath">Admin Area</p>
+    </div>
 </div>
 
 <div class="max-w-md mx-auto px-5 mt-6">
-    <div class="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-8">
-        <h2 class="text-sm font-bold text-slate-800 mb-4"><i class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Video & Materials</h2>
-        <form id="videoForm" class="space-y-3" onsubmit="return false;">
 
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Course / Category</label>
-                <input type="text" id="course" required placeholder="e.g. JEE Prep, Foundation Batch" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
-            </div>
-
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Course Photo (One time)</label>
-                <button type="button" id="coursePhotoBtn" class="w-full p-2.5 text-sm border-2 border-dashed border-blue-200 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2">
-                    <i class="fas fa-image"></i> <span id="coursePhotoLabel">Upload Course Cover Photo</span>
-                </button>
-                <div id="coursePhotoPreviewWrap" class="hidden mt-2">
-                    <img id="coursePhotoPreview" class="w-full h-28 object-cover rounded-xl border border-slate-100" />
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Teacher Name</label>
-                <input type="text" id="teacherName" required placeholder="e.g. Mr. Sharma" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Class</label>
-                    <input type="text" id="targetClass" required placeholder="e.g. 10" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Subject</label>
-                    <input type="text" id="subject" required placeholder="e.g. Physics" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lecture Title / Topic</label>
-                <input type="text" id="title" required placeholder="e.g. Newton's Laws" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
-            </div>
-
-            <div class="border-2 border-dashed border-blue-200 rounded-xl p-4 text-center bg-blue-50 relative overflow-hidden">
-                <input type="file" id="videoFile" accept="video/mp4,video/x-m4v,video/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                <i class="fas fa-film text-blue-400 text-2xl mb-2"></i>
-                <p class="text-xs font-bold text-slate-600 truncate px-2" id="fileNameText">Tap to select video (.mp4)</p>
-                <p class="text-[10px] text-slate-400 mt-1" id="fileSizeText"></p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 pt-1">
-                <button type="button" id="notesBtn" class="p-3 border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-600 flex flex-col items-center justify-center gap-1 active:scale-95 transition">
-                    <i class="fas fa-file-pdf text-xl mb-1"></i>
-                    <span id="notesLabel" class="text-[10px] font-bold uppercase tracking-wide">Attach Notes</span>
-                </button>
-                <button type="button" id="testBtn" class="p-3 border border-purple-200 rounded-xl bg-purple-50 text-purple-600 flex flex-col items-center justify-center gap-1 active:scale-95 transition">
-                    <i class="fas fa-file-alt text-xl mb-1"></i>
-                    <span id="testLabel" class="text-[10px] font-bold uppercase tracking-wide">Attach DPP / Test</span>
-                </button>
-            </div>
-
-            <div id="progressWrap" class="hidden mt-3">
-                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-150" style="width: 0%"></div>
-                </div>
-                <div class="flex justify-between mt-1">
-                    <span class="text-[10px] font-bold text-blue-600" id="progressPercent">0%</span>
-                    <span class="text-[10px] text-slate-400" id="progressBytes"></span>
-                </div>
-            </div>
-
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl mt-3 transition shadow-md shadow-blue-100 flex justify-center items-center gap-2 relative overflow-hidden">
-                <i class="fas fa-upload"></i> Start Upload & Publish
-            </button>
-
-            <p id="uploadStatus" class="text-[11px] text-center font-bold text-blue-600 hidden mt-2"></p>
-        </form>
+    <div id="view-courses" class="space-y-4">
+        <button onclick="openCourseModal()" class="w-full bg-blue-50 border-2 border-dashed border-blue-200 text-blue-600 font-bold py-4 rounded-2xl flex justify-center items-center gap-2 active:scale-95 transition">
+            <i class="fas fa-plus-circle text-lg"></i> Create New Batch / Course
+        </button>
+        <h3 class="font-bold text-slate-800 text-sm mt-6 mb-2 px-1"><i class="fas fa-layer-group text-slate-400 mr-1"></i> Your Active Courses</h3>
+        <div id="courseList" class="space-y-3">
+            <div class="text-center p-5"><i class="fas fa-spinner fa-spin text-slate-400"></i></div>
+        </div>
     </div>
 
-    <div class="mb-8">
-        <h2 class="text-sm font-bold text-slate-800 mb-4 px-1 flex items-center gap-2">
-            <i class="fas fa-list text-blue-500"></i> Your Uploaded Videos
-        </h2>
-        <div id="videoListContainer" class="space-y-3">
-            <div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center">
-                <p class="text-sm text-slate-400 font-medium"><i class="fas fa-spinner fa-spin mr-2"></i>Loading videos...</p>
-            </div>
+    <div id="view-subjects" class="hidden space-y-4">
+        <button onclick="openSubjectModal()" class="w-full bg-purple-50 border-2 border-dashed border-purple-200 text-purple-600 font-bold py-4 rounded-2xl flex justify-center items-center gap-2 active:scale-95 transition">
+            <i class="fas fa-plus-circle text-lg"></i> Add New Subject
+        </button>
+        <h3 class="font-bold text-slate-800 text-sm mt-6 mb-2 px-1"><i class="fas fa-book-open text-slate-400 mr-1"></i> Subjects in <span id="lblActiveCourse" class="text-blue-600"></span></h3>
+        <div id="subjectList" class="space-y-3"></div>
+    </div>
+
+    <div id="view-upload" class="hidden">
+        
+        <div class="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-8">
+            <h2 class="text-sm font-bold text-slate-800 mb-4"><i class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload to <span id="lblActiveSubject" class="text-blue-600"></span></h2>
+            
+            <form id="videoForm" class="space-y-3" onsubmit="return false;">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Class</label>
+                        <input type="text" id="targetClass" required placeholder="e.g. 10" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Teacher Name</label>
+                        <input type="text" id="teacherName" required placeholder="e.g. Mr. Sharma" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lecture Title / Topic</label>
+                    <input type="text" id="title" required placeholder="e.g. Newton's Laws" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
+                </div>
+
+                <div class="border-2 border-dashed border-blue-200 rounded-xl p-4 text-center bg-blue-50 relative overflow-hidden">
+                    <input type="file" id="videoFile" accept="video/mp4,video/x-m4v,video/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <i class="fas fa-film text-blue-400 text-2xl mb-2"></i>
+                    <p class="text-xs font-bold text-slate-600 truncate px-2" id="fileNameText">Tap to select video (.mp4)</p>
+                    <p class="text-[10px] text-slate-400 mt-1" id="fileSizeText"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <button type="button" id="notesBtn" class="p-3 border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-600 flex flex-col items-center justify-center gap-1 active:scale-95 transition">
+                        <i class="fas fa-file-pdf text-xl mb-1"></i>
+                        <span id="notesLabel" class="text-[10px] font-bold uppercase tracking-wide">Attach Notes</span>
+                    </button>
+                    <button type="button" id="testBtn" class="p-3 border border-purple-200 rounded-xl bg-purple-50 text-purple-600 flex flex-col items-center justify-center gap-1 active:scale-95 transition">
+                        <i class="fas fa-file-alt text-xl mb-1"></i>
+                        <span id="testLabel" class="text-[10px] font-bold uppercase tracking-wide">Attach DPP / Test</span>
+                    </button>
+                </div>
+
+                <div id="progressWrap" class="hidden mt-3">
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-150" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span class="text-[10px] font-bold text-blue-600" id="progressPercent">0%</span>
+                        <span class="text-[10px] text-slate-400" id="progressBytes"></span>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl mt-3 transition flex justify-center items-center gap-2">
+                    <i class="fas fa-upload"></i> Start Upload & Publish
+                </button>
+                <p id="uploadStatus" class="text-[11px] text-center font-bold text-blue-600 hidden mt-2"></p>
+            </form>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 px-1 flex items-center justify-between">
+                <span><i class="fas fa-list text-blue-500 mr-1"></i> Uploaded Lectures</span>
+                <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full" id="videoCountBadge">0</span>
+            </h2>
+            <div id="videoListContainer" class="space-y-3"></div>
+        </div>
+    </div>
+
+</div>
+
+<div id="courseModal" class="fixed inset-0 z- bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-6">
+    <div class="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl">
+        <h3 class="font-bold text-slate-800 text-lg mb-4">Create New Course</h3>
+        <input type="text" id="newCourseName" placeholder="e.g. JEE Rankers Batch" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500 bg-slate-50 mb-3 text-sm">
+        
+        <button type="button" id="coursePhotoBtn" class="w-full p-3 text-sm border-2 border-dashed border-blue-200 rounded-xl bg-blue-50 text-blue-600 font-bold flex flex-col items-center justify-center gap-1 mb-4">
+            <i class="fas fa-image text-xl"></i> <span id="coursePhotoLabel">Upload Cover Photo</span>
+        </button>
+        
+        <div class="flex gap-3 mt-5">
+            <button onclick="closeCourseModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold active:scale-95 transition">Cancel</button>
+            <button onclick="saveNewCourse()" class="flex-1 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold active:scale-95 transition">Create Course</button>
+        </div>
+    </div>
+</div>
+
+<div id="subjectModal" class="fixed inset-0 z- bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-6">
+    <div class="bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl">
+        <h3 class="font-bold text-slate-800 text-lg mb-4">Add Subject to <span id="subjModalCourseName" class="text-blue-600"></span></h3>
+        <input type="text" id="newSubjectName" placeholder="e.g. Physics, Math" class="w-full p-3 border rounded-xl outline-none focus:border-purple-500 bg-slate-50 mb-5 text-sm">
+        
+        <div class="flex gap-3">
+            <button onclick="closeSubjectModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold active:scale-95 transition">Cancel</button>
+            <button onclick="saveNewSubject()" class="flex-1 py-3 rounded-xl bg-purple-600 text-white text-sm font-bold active:scale-95 transition">Add Subject</button>
         </div>
     </div>
 </div>
 
 <div id="deleteModal" class="fixed inset-0 z- bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-6">
     <div class="bg-white w-full max-w-sm rounded-[20px] p-5 shadow-2xl">
-        <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-xl mb-3">
-            <i class="fas fa-trash-alt"></i>
-        </div>
-        <h3 class="font-bold text-slate-800 text-sm mb-1">Delete this video?</h3>
-        <p id="deleteModalTitle" class="text-xs text-slate-500 mb-4">This action cannot be undone.</p>
-        <div class="flex gap-2">
+        <h3 class="font-bold text-slate-800 text-sm mb-1 text-center">Delete this video?</h3>
+        <div class="flex gap-2 mt-4">
             <button onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold active:scale-95 transition">Cancel</button>
             <button onclick="confirmDelete()" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold active:scale-95 transition">Delete</button>
         </div>
@@ -129,31 +155,32 @@
 
     const WISTIA_ACCESS_TOKEN = "52e25c62ca626beb4dc90b4c6207ebc45861e5de7e6569d99c6ee0fe06b6b286";
 
-    let coursePhotoUrl = "";
+    let adminSchoolId = null;
+    let allVideos = [];
+    let allCourseMeta = {};
+
+    // 🌟 APP STATE
+    let currentStep = 1; // 1: Course, 2: Subject, 3: Upload
+    let activeCourse = "";
+    let activeSubject = "";
+
+    // Upload Data State
+    let newCoursePhotoUrl = "";
     let notesUrl = "";
     let testUrl = "";
-    let adminSchoolId = null;
     let pendingDeleteId = null;
 
-    const form = document.getElementById('videoForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const fileInput = document.getElementById('videoFile');
-    const fileNameText = document.getElementById('fileNameText');
-    const fileSizeText = document.getElementById('fileSizeText');
-    const uploadStatus = document.getElementById('uploadStatus');
-    const progressWrap = document.getElementById('progressWrap');
-    const progressBar = document.getElementById('progressBar');
-    const progressPercent = document.getElementById('progressPercent');
-    const progressBytes = document.getElementById('progressBytes');
-    const videoListContainer = document.getElementById('videoListContainer');
-    const deleteModal = document.getElementById('deleteModal');
-    const deleteModalTitle = document.getElementById('deleteModalTitle');
+    const backBtn = document.getElementById('backBtn');
+    const headerTitle = document.getElementById('headerTitle');
+    const headerPath = document.getElementById('headerPath');
 
-    // Smart Auto-Fill
-    document.getElementById('course').value = localStorage.getItem('ast_course') || '';
-    document.getElementById('teacherName').value = localStorage.getItem('ast_teacher') || '';
-    document.getElementById('targetClass').value = localStorage.getItem('ast_class') || '';
-    document.getElementById('subject').value = localStorage.getItem('ast_subject') || '';
+    // Anti-Undefined AutoFill
+    function getSafeStorage(key) {
+        const val = localStorage.getItem(key);
+        return (val && val !== 'undefined' && val !== 'null') ? val : '';
+    }
+    document.getElementById('teacherName').value = getSafeStorage('ast_teacher');
+    document.getElementById('targetClass').value = getSafeStorage('ast_class');
 
     function formatBytes(bytes) {
         if (!bytes) return "0 MB";
@@ -161,21 +188,18 @@
         return mb >= 1 ? mb.toFixed(1) + " MB" : (bytes / 1024).toFixed(0) + " KB";
     }
 
-    // Cloudinary Widgets
+    // 🌟 CLOUDINARY WIDGETS
     const coursePhotoWidget = cloudinary.createUploadWidget({ cloudName: 'dl1cddemu', uploadPreset: 'upload', resourceType: 'image' }, (e, r) => {
         if (!e && r && r.event === "success") {
-            coursePhotoUrl = r.info.secure_url;
-            document.getElementById('coursePhotoLabel').innerText = "Photo selected ✓";
-            document.getElementById('coursePhotoPreviewWrap').classList.remove('hidden');
-            document.getElementById('coursePhotoPreview').src = coursePhotoUrl;
+            newCoursePhotoUrl = r.info.secure_url || "";
+            document.getElementById('coursePhotoLabel').innerHTML = `<span class="text-emerald-600">Photo Uploaded ✓</span>`;
         }
     });
     document.getElementById('coursePhotoBtn').addEventListener('click', () => coursePhotoWidget.open());
 
-    // 🌟 Notes & Test Upload Widgets (PDF + Image support)
     const notesWidget = cloudinary.createUploadWidget({ cloudName: 'dl1cddemu', uploadPreset: 'upload', resourceType: 'auto' }, (e, r) => {
         if (!e && r && r.event === "success") {
-            notesUrl = r.info.secure_url;
+            notesUrl = r.info.secure_url || "";
             document.getElementById('notesLabel').innerText = "Notes Attached ✓";
             document.getElementById('notesBtn').classList.replace('bg-emerald-50', 'bg-emerald-100');
         }
@@ -184,131 +208,248 @@
 
     const testWidget = cloudinary.createUploadWidget({ cloudName: 'dl1cddemu', uploadPreset: 'upload', resourceType: 'auto' }, (e, r) => {
         if (!e && r && r.event === "success") {
-            testUrl = r.info.secure_url;
+            testUrl = r.info.secure_url || "";
             document.getElementById('testLabel').innerText = "Test Attached ✓";
             document.getElementById('testBtn').classList.replace('bg-purple-50', 'bg-purple-100');
         }
     });
     document.getElementById('testBtn').addEventListener('click', () => testWidget.open());
 
-
+    // File Input UI
+    const fileInput = document.getElementById('videoFile');
     fileInput.addEventListener('change', (e) => {
-        const selectedFile = e.target.files;
-        if (selectedFile) {
-            fileNameText.innerText = selectedFile.name;
-            fileNameText.classList.add('text-blue-600');
-            fileSizeText.innerText = formatBytes(selectedFile.size);
+        const file = e.target.files;
+        if (file) {
+            document.getElementById('fileNameText').innerText = file.name;
+            document.getElementById('fileNameText').classList.add('text-blue-600');
+            document.getElementById('fileSizeText').innerText = formatBytes(file.size);
         } else {
-            fileNameText.innerText = "Tap to select video (.mp4)";
-            fileNameText.classList.remove('text-blue-600');
-            fileSizeText.innerText = "";
+            document.getElementById('fileNameText').innerText = "Tap to select video (.mp4)";
+            document.getElementById('fileNameText').classList.remove('text-blue-600');
+            document.getElementById('fileSizeText').innerText = "";
         }
     });
 
+    // 🌟 INIT
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const adminDoc = await getDoc(doc(db, "users", user.uid));
             if (adminDoc.exists()) {
-                adminSchoolId = adminDoc.data().schoolId;
-                loadVideoList();
+                adminSchoolId = adminDoc.data().schoolId || "UNKNOWN";
+                fetchDatabase();
             }
         }
     });
 
-    function loadVideoList() {
-        const q = query(collection(db, "videos"), where("schoolId", "==", adminSchoolId));
-        onSnapshot(q, (snapshot) => {
-            let videos = [];
-            snapshot.forEach((d) => videos.push({ id: d.id, ...d.data() }));
+    function fetchDatabase() {
+        // Fetch Course Meta (Photos)
+        onSnapshot(query(collection(db, "courseMeta"), where("schoolId", "==", adminSchoolId)), (snap) => {
+            allCourseMeta = {};
+            snap.forEach(d => { allCourseMeta[d.data().course] = d.data().photoUrl; });
+            updateUI();
+        });
 
-            if (videos.length === 0) {
-                videoListContainer.innerHTML = `<div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center"><p class="text-sm text-slate-400 font-medium">No videos uploaded yet.</p></div>`;
-                return;
-            }
-
-            videos.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-            videoListContainer.innerHTML = "";
-            videos.forEach((video) => {
-                const safeTitle = (video.title || "Untitled").replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                videoListContainer.innerHTML += `
-                    <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden flex items-center gap-3 p-3">
-                        <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" class="w-20 h-14 rounded-lg object-cover bg-slate-200 shrink-0" onerror="this.style.display='none'">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1.5 mb-1 flex-wrap">
-                                ${video.course ? `<span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">${video.course}</span>` : ''}
-                                ${video.notesUrl ? `<span class="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded-full"><i class="fas fa-file-pdf"></i> Notes</span>` : ''}
-                                ${video.testUrl ? `<span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full"><i class="fas fa-file-alt"></i> DPP</span>` : ''}
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-xs truncate">${video.title || 'Untitled'}</h4>
-                        </div>
-                        <button onclick="openDeleteModal('${video.id}', '${safeTitle}')" class="w-9 h-9 shrink-0 bg-red-50 hover:bg-red-100 text-red-500 rounded-full flex items-center justify-center transition active:scale-90"><i class="fas fa-trash-alt text-sm"></i></button>
-                    </div>`;
-            });
+        // Fetch All Videos
+        onSnapshot(query(collection(db, "videos"), where("schoolId", "==", adminSchoolId)), (snap) => {
+            allVideos = [];
+            snap.forEach(d => allVideos.push({ id: d.id, ...d.data() }));
+            allVideos.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            updateUI();
         });
     }
 
-    window.openDeleteModal = function (videoId, title) {
-        pendingDeleteId = videoId;
-        deleteModalTitle.innerText = `"${title}" will be permanently removed.`;
-        deleteModal.classList.remove('hidden');
-        deleteModal.classList.add('flex');
-    };
-    window.closeDeleteModal = function () {
-        pendingDeleteId = null;
-        deleteModal.classList.add('hidden');
-        deleteModal.classList.remove('flex');
-    };
-    window.confirmDelete = async function () {
-        if (!pendingDeleteId) return;
-        try { await deleteDoc(doc(db, "videos", pendingDeleteId)); } catch (err) { alert("Failed: " + err.message); }
-        closeDeleteModal();
+    // 🌟 NAVIGATION & UI RENDERER
+    function updateUI() {
+        document.getElementById('view-courses').classList.add('hidden');
+        document.getElementById('view-subjects').classList.add('hidden');
+        document.getElementById('view-upload').classList.add('hidden');
+
+        if (currentStep === 1) {
+            headerTitle.innerText = "Manage Batches";
+            headerPath.innerText = "Admin / Courses";
+            document.getElementById('view-courses').classList.remove('hidden');
+            renderCourses();
+        } 
+        else if (currentStep === 2) {
+            headerTitle.innerText = activeCourse;
+            headerPath.innerText = `Courses / ${activeCourse}`;
+            document.getElementById('view-subjects').classList.remove('hidden');
+            document.getElementById('lblActiveCourse').innerText = activeCourse;
+            renderSubjects();
+        } 
+        else if (currentStep === 3) {
+            headerTitle.innerText = activeSubject;
+            headerPath.innerText = `${activeCourse} / ${activeSubject}`;
+            document.getElementById('view-upload').classList.remove('hidden');
+            document.getElementById('lblActiveSubject').innerText = activeSubject;
+            renderVideos();
+        }
+    }
+
+    backBtn.onclick = () => {
+        if (currentStep === 3) { currentStep = 2; updateUI(); }
+        else if (currentStep === 2) { currentStep = 1; updateUI(); }
+        else { window.location.href = 'teacher-dashboard.html'; }
     };
 
+    // 🌟 STEP 1: RENDER COURSES
+    function renderCourses() {
+        const cList = document.getElementById('courseList');
+        const courseSet = new Set(Object.keys(allCourseMeta));
+        allVideos.forEach(v => { if(v.course) courseSet.add(v.course); });
+        
+        const courses = Array.from(courseSet).sort();
+        if (courses.length === 0) {
+            cList.innerHTML = `<p class="text-sm text-slate-400 text-center py-4">No courses created yet.</p>`;
+            return;
+        }
+
+        cList.innerHTML = "";
+        courses.forEach(course => {
+            const photo = allCourseMeta[course] || 'https://via.placeholder.com/150/e2e8f0/94a3b8?text=Course';
+            cList.innerHTML += `
+                <div onclick="selectCourse('${course}')" class="bg-white p-3 rounded-[20px] shadow-sm border border-slate-100 flex items-center gap-4 cursor-pointer active:scale-95 transition">
+                    <img src="${photo}" class="w-14 h-14 rounded-xl object-cover border border-slate-100">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-slate-800 text-sm">${course}</h4>
+                        <p class="text-[11px] text-slate-400">Tap to view subjects</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300"></i>
+                </div>
+            `;
+        });
+    }
+    window.selectCourse = (cName) => { activeCourse = cName; currentStep = 2; updateUI(); };
+
+    // 🌟 STEP 2: RENDER SUBJECTS
+    function renderSubjects() {
+        const sList = document.getElementById('subjectList');
+        const subjSet = new Set();
+        allVideos.forEach(v => { if(v.course === activeCourse && v.subject) subjSet.add(v.subject); });
+        
+        const subjects = Array.from(subjSet).sort();
+        if (subjects.length === 0) {
+            sList.innerHTML = `<p class="text-sm text-slate-400 text-center py-4">No subjects found in this course.</p>`;
+            return;
+        }
+
+        sList.innerHTML = "";
+        subjects.forEach(subj => {
+            sList.innerHTML += `
+                <div onclick="selectSubject('${subj}')" class="bg-white p-4 rounded-[20px] shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer active:scale-95 transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><i class="fas fa-book"></i></div>
+                        <h4 class="font-bold text-slate-800 text-sm">${subj}</h4>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300"></i>
+                </div>
+            `;
+        });
+    }
+    window.selectSubject = (sName) => { activeSubject = sName; currentStep = 3; updateUI(); };
+
+    // 🌟 STEP 3: RENDER VIDEOS (FILTERED)
+    function renderVideos() {
+        const vList = document.getElementById('videoListContainer');
+        const filteredVideos = allVideos.filter(v => v.course === activeCourse && v.subject === activeSubject);
+        
+        document.getElementById('videoCountBadge').innerText = filteredVideos.length;
+
+        if (filteredVideos.length === 0) {
+            vList.innerHTML = `<div class="bg-white p-6 rounded-[20px] text-center border border-slate-100"><p class="text-sm text-slate-400">No videos uploaded in this subject.</p></div>`;
+            return;
+        }
+
+        vList.innerHTML = "";
+        filteredVideos.forEach(video => {
+            const safeTitle = (video.title || "Untitled").replace(/'/g, "\\'");
+            vList.innerHTML += `
+                <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 flex items-center gap-3 p-3">
+                    <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" class="w-24 h-16 rounded-xl object-cover bg-slate-200 shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-slate-800 text-xs mb-1 truncate">${safeTitle}</h4>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded-full">Class ${video.targetClass}</span>
+                            ${video.notesUrl ? `<span class="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded-full"><i class="fas fa-file-pdf"></i></span>` : ''}
+                            ${video.testUrl ? `<span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full"><i class="fas fa-file-alt"></i></span>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="openDeleteModal('${video.id}', '${safeTitle}')" class="w-9 h-9 shrink-0 bg-red-50 hover:bg-red-100 text-red-500 rounded-full flex items-center justify-center active:scale-90"><i class="fas fa-trash-alt text-sm"></i></button>
+                </div>`;
+        });
+    }
+
+    // 🌟 MODALS LOGIC
+    window.openCourseModal = () => { document.getElementById('courseModal').classList.remove('hidden'); document.getElementById('courseModal').classList.add('flex'); };
+    window.closeCourseModal = () => { document.getElementById('courseModal').classList.add('hidden'); document.getElementById('courseModal').classList.remove('flex'); };
+    window.saveNewCourse = async () => {
+        const cName = document.getElementById('newCourseName').value.trim();
+        if(!cName) return alert("Enter course name!");
+        if(newCoursePhotoUrl) {
+            const metaId = `${adminSchoolId}_${cName}`.replace(/\s+/g, '_').toLowerCase();
+            await setDoc(doc(db, "courseMeta", metaId), { schoolId: adminSchoolId, course: cName, photoUrl: newCoursePhotoUrl }, { merge: true });
+        }
+        closeCourseModal();
+        selectCourse(cName);
+    };
+
+    window.openSubjectModal = () => { 
+        document.getElementById('subjModalCourseName').innerText = activeCourse;
+        document.getElementById('subjectModal').classList.remove('hidden'); document.getElementById('subjectModal').classList.add('flex'); 
+    };
+    window.closeSubjectModal = () => { document.getElementById('subjectModal').classList.add('hidden'); document.getElementById('subjectModal').classList.remove('flex'); };
+    window.saveNewSubject = () => {
+        const sName = document.getElementById('newSubjectName').value.trim();
+        if(!sName) return alert("Enter subject name!");
+        closeSubjectModal();
+        selectSubject(sName);
+    };
+
+    window.openDeleteModal = (id, title) => { pendingDeleteId = id; document.getElementById('deleteModal').classList.remove('hidden'); document.getElementById('deleteModal').classList.add('flex'); };
+    window.closeDeleteModal = () => { pendingDeleteId = null; document.getElementById('deleteModal').classList.add('hidden'); document.getElementById('deleteModal').classList.remove('flex'); };
+    window.confirmDelete = async () => { if(pendingDeleteId) { await deleteDoc(doc(db, "videos", pendingDeleteId)); closeDeleteModal(); } };
+
+    // 🌟 WISTIA UPLOAD
     function uploadWithProgress(formData, totalBytes) {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('POST', 'https://upload.wistia.com/');
             xhr.setRequestHeader('Authorization', 'Bearer ' + WISTIA_ACCESS_TOKEN);
-
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    const percent = Math.round((event.loaded / event.total) * 100);
-                    progressBar.style.width = percent + "%";
-                    progressPercent.innerText = percent + "%";
-                    progressBytes.innerText = `${formatBytes(event.loaded)} / ${formatBytes(event.total)}`;
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    document.getElementById('progressBar').style.width = percent + "%";
+                    document.getElementById('progressPercent').innerText = percent + "%";
+                    document.getElementById('progressBytes').innerText = `${formatBytes(e.loaded)} / ${formatBytes(e.total)}`;
                 }
             };
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
-                else reject(new Error("Wistia Error: " + xhr.responseText));
-            };
+            xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText)); else reject(new Error(xhr.responseText)); };
             xhr.onerror = () => reject(new Error("Network error"));
             xhr.send(formData);
         });
     }
 
-    form.addEventListener('submit', async () => {
+    document.getElementById('videoForm').addEventListener('submit', async () => {
         const file = fileInput.files;
-        if (!file) return alert("Please select a video file!");
+        if (!file) return alert("Select video file!");
 
-        const course = document.getElementById('course').value.trim();
-        const teacherName = document.getElementById('teacherName').value.trim();
-        const title = document.getElementById('title').value.trim();
-        const targetClass = document.getElementById('targetClass').value.trim();
-        const subject = document.getElementById('subject').value.trim();
+        const title = document.getElementById('title').value.trim() || "Untitled";
+        const teacherName = document.getElementById('teacherName').value.trim() || "";
+        const targetClass = document.getElementById('targetClass').value.trim() || "";
 
-        localStorage.setItem('ast_course', course);
         localStorage.setItem('ast_teacher', teacherName);
         localStorage.setItem('ast_class', targetClass);
-        localStorage.setItem('ast_subject', subject);
 
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-        uploadStatus.classList.remove('hidden', 'text-emerald-600', 'text-red-600');
-        uploadStatus.classList.add('text-blue-600');
-        uploadStatus.innerText = "Please wait, uploading video...";
-        progressWrap.classList.remove('hidden');
-        progressBar.style.width = "0%";
+        const sBtn = document.getElementById('submitBtn');
+        const uStatus = document.getElementById('uploadStatus');
+        const pWrap = document.getElementById('progressWrap');
+
+        sBtn.disabled = true;
+        sBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        uStatus.classList.remove('hidden', 'text-emerald-600', 'text-red-600');
+        uStatus.classList.add('text-blue-600');
+        uStatus.innerText = "Please wait, uploading video...";
+        pWrap.classList.remove('hidden');
 
         try {
             const formData = new FormData();
@@ -316,62 +457,42 @@
             formData.append('name', title);
 
             const wistiaData = await uploadWithProgress(formData, file.size);
-            const generatedWistiaId = wistiaData.hashed_id;
-
-            if (coursePhotoUrl && course) {
-                const courseMetaId = `${adminSchoolId}_${course}`.replace(/\s+/g, '_').toLowerCase();
-                await setDoc(doc(db, "courseMeta", courseMetaId), {
-                    schoolId: adminSchoolId,
-                    course: course,
-                    photoUrl: coursePhotoUrl
-                }, { merge: true });
-            }
-
+            
             await addDoc(collection(db, "videos"), {
                 schoolId: adminSchoolId,
-                course: course,
+                course: activeCourse,       // 🌟 Auto-filled from Step 1
+                subject: activeSubject,     // 🌟 Auto-filled from Step 2
                 teacherName: teacherName,
                 targetClass: targetClass,
-                subject: subject,
                 title: title,
-                wistiaId: generatedWistiaId,
-                notesUrl: notesUrl, // 🌟 Save Notes URL
-                testUrl: testUrl,   // 🌟 Save Test URL
+                wistiaId: wistiaData.hashed_id,
+                notesUrl: notesUrl || "", 
+                testUrl: testUrl || "",   
                 createdAt: serverTimestamp()
             });
 
             document.getElementById('title').value = '';
             fileInput.value = '';
-            fileNameText.innerText = "Tap to select video (.mp4)";
-            fileNameText.classList.remove('text-blue-600');
-            fileSizeText.innerText = "";
+            document.getElementById('fileNameText').innerText = "Tap to select video (.mp4)";
+            document.getElementById('fileSizeText').innerText = "";
             
-            // 🌟 Reset File buttons for next video
-            notesUrl = "";
-            testUrl = "";
+            notesUrl = ""; testUrl = "";
             document.getElementById('notesLabel').innerText = "Attach Notes";
             document.getElementById('testLabel').innerText = "Attach DPP / Test";
             document.getElementById('notesBtn').classList.replace('bg-emerald-100', 'bg-emerald-50');
             document.getElementById('testBtn').classList.replace('bg-purple-100', 'bg-purple-50');
 
-            progressBar.style.width = "100%";
-            progressPercent.innerText = "100%";
-            uploadStatus.innerText = "✅ Video published successfully!";
-            uploadStatus.classList.replace('text-blue-600', 'text-emerald-600');
-
-            setTimeout(() => {
-                uploadStatus.classList.add('hidden');
-                progressWrap.classList.add('hidden');
-            }, 4000);
+            uStatus.innerText = "✅ Published successfully!";
+            uStatus.classList.replace('text-blue-600', 'text-emerald-600');
+            setTimeout(() => { uStatus.classList.add('hidden'); pWrap.classList.add('hidden'); }, 3000);
 
         } catch (error) {
-            uploadStatus.innerText = "❌ Failed: " + error.message;
-            uploadStatus.classList.replace('text-blue-600', 'text-red-600');
-            alert(error.message);
+            uStatus.innerText = "❌ Error: " + error.message;
+            uStatus.classList.replace('text-blue-600', 'text-red-600');
         }
 
-        submitBtn.innerHTML = '<i class="fas fa-upload"></i> Start Upload & Publish';
-        submitBtn.disabled = false;
+        sBtn.innerHTML = '<i class="fas fa-upload"></i> Start Upload & Publish';
+        sBtn.disabled = false;
     });
 </script>
 </body>
