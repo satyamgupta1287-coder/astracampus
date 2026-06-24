@@ -23,6 +23,11 @@
         <h2 class="text-sm font-bold text-slate-800 mb-4"><i class="fas fa-cloud-upload-alt text-blue-500 mr-2"></i>Upload Video to Wistia</h2>
         <form id="videoForm" class="space-y-3" onsubmit="return false;">
 
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Course / Category</label>
+                <input type="text" id="course" required placeholder="e.g. JEE Prep, Foundation Batch" class="w-full p-2.5 text-sm border rounded-xl outline-none focus:border-blue-500 bg-slate-50">
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Target Class</label>
@@ -64,17 +69,46 @@
             <p id="uploadStatus" class="text-[11px] text-center font-bold text-blue-600 hidden mt-2"></p>
         </form>
     </div>
+
+    <!-- Uploaded Videos List -->
+    <div class="mb-8">
+        <h2 class="text-sm font-bold text-slate-800 mb-4 px-1 flex items-center gap-2">
+            <i class="fas fa-list text-blue-500"></i> Your Uploaded Videos
+        </h2>
+        <div id="videoListContainer" class="space-y-3">
+            <div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center">
+                <p class="text-sm text-slate-400 font-medium"><i class="fas fa-spinner fa-spin mr-2"></i>Loading videos...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="deleteModal" class="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center px-6">
+    <div class="bg-white w-full max-w-sm rounded-[20px] p-5 shadow-2xl">
+        <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-xl mb-3">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <h3 class="font-bold text-slate-800 text-sm mb-1">Delete this video?</h3>
+        <p id="deleteModalTitle" class="text-xs text-slate-500 mb-4">This action cannot be undone.</p>
+        <div class="flex gap-2">
+            <button onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold active:scale-95 transition">Cancel</button>
+            <button onclick="confirmDelete()" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold active:scale-95 transition">Delete</button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { auth, db } from '../js/firebase-init.js';
-    import { collection, addDoc, getDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { collection, addDoc, getDoc, doc, deleteDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
     // Wistia Access Token (Bearer) - api_password ab deprecated hai, naya token Wistia Account > Settings > API Access se banao
     const WISTIA_ACCESS_TOKEN = "52e25c62ca626beb4dc90b4c6207ebc45861e5de7e6569d99c6ee0fe06b6b286";
 
     let adminSchoolId = null;
+    let pendingDeleteId = null;
+
     const form = document.getElementById('videoForm');
     const submitBtn = document.getElementById('submitBtn');
     const fileInput = document.getElementById('videoFile');
@@ -85,6 +119,9 @@
     const progressBar = document.getElementById('progressBar');
     const progressPercent = document.getElementById('progressPercent');
     const progressBytes = document.getElementById('progressBytes');
+    const videoListContainer = document.getElementById('videoListContainer');
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteModalTitle = document.getElementById('deleteModalTitle');
 
     function formatBytes(bytes) {
         if (!bytes) return "0 MB";
@@ -94,9 +131,9 @@
 
     // Jab file select ho tab naam + size dikhaye
     fileInput.addEventListener('change', (e) => {
-        const selectedFile = e.target.files[0]; // ✅ FIX: [0] use karo, FileList nahi
+        const selectedFile = e.target.files[0];
         if (selectedFile) {
-            fileNameText.innerText = selectedFile.name; // ✅ FIX: .files[0].name
+            fileNameText.innerText = selectedFile.name;
             fileNameText.classList.add('text-blue-600');
             fileSizeText.innerText = formatBytes(selectedFile.size);
         } else {
@@ -106,15 +143,92 @@
         }
     });
 
-    // Check Admin Login & get School ID
+    // Check Admin Login & get School ID, then load video list
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const adminDoc = await getDoc(doc(db, "users", user.uid));
             if (adminDoc.exists()) {
                 adminSchoolId = adminDoc.data().schoolId;
+                loadVideoList();
             }
         }
     });
+
+    // Live list of uploaded videos for this school (client-side filtered, no composite index needed)
+    function loadVideoList() {
+        const q = query(collection(db, "videos"), where("schoolId", "==", adminSchoolId));
+
+        onSnapshot(
+            q,
+            (snapshot) => {
+                let videos = [];
+                snapshot.forEach((d) => videos.push({ id: d.id, ...d.data() }));
+
+                if (videos.length === 0) {
+                    videoListContainer.innerHTML = `
+                        <div class="bg-white p-6 rounded-[20px] shadow-sm border border-slate-100 text-center">
+                            <p class="text-sm text-slate-400 font-medium">No videos uploaded yet.</p>
+                        </div>`;
+                    return;
+                }
+
+                videos.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                videoListContainer.innerHTML = "";
+                videos.forEach((video) => {
+                    const safeTitle = (video.title || "Untitled").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    videoListContainer.innerHTML += `
+                        <div class="bg-white rounded-[20px] shadow-sm border border-slate-100 overflow-hidden flex items-center gap-3 p-3">
+                            <img src="https://fast.wistia.com/embed/medias/${video.wistiaId}/swatch" 
+                                 class="w-20 h-14 rounded-lg object-cover bg-slate-200 shrink-0" 
+                                 onerror="this.style.display='none'">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                                    ${video.course ? `<span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">${video.course}</span>` : ''}
+                                    <span class="bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">${video.subject || ''}</span>
+                                    <span class="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded-full">Class ${video.targetClass || ''}</span>
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-xs truncate">${video.title || 'Untitled'}</h4>
+                            </div>
+                            <button onclick="openDeleteModal('${video.id}', '${safeTitle}')" class="w-9 h-9 shrink-0 bg-red-50 hover:bg-red-100 text-red-500 rounded-full flex items-center justify-center transition active:scale-90">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+            },
+            (error) => {
+                videoListContainer.innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-[20px] border border-red-100 text-center">
+                        <p class="text-xs text-red-500 font-bold">Error loading videos: ${error.message}</p>
+                    </div>`;
+            }
+        );
+    }
+
+    // Delete modal logic
+    window.openDeleteModal = function (videoId, title) {
+        pendingDeleteId = videoId;
+        deleteModalTitle.innerText = `"${title}" will be permanently removed from the list.`;
+        deleteModal.classList.remove('hidden');
+        deleteModal.classList.add('flex');
+    };
+
+    window.closeDeleteModal = function () {
+        pendingDeleteId = null;
+        deleteModal.classList.add('hidden');
+        deleteModal.classList.remove('flex');
+    };
+
+    window.confirmDelete = async function () {
+        if (!pendingDeleteId) return;
+        try {
+            await deleteDoc(doc(db, "videos", pendingDeleteId));
+        } catch (err) {
+            alert("Failed to delete: " + err.message);
+        }
+        closeDeleteModal();
+    };
 
     // XHR based upload so we get real progress events (fetch can't report upload progress)
     function uploadWithProgress(formData, totalBytes) {
@@ -154,9 +268,10 @@
 
     // Upload & Submit Logic
     form.addEventListener('submit', async () => {
-        const file = fileInput.files[0]; // ✅ FIX: actual File object, not FileList
+        const file = fileInput.files[0];
         if (!file) return alert("Please select a video file!");
 
+        const course = document.getElementById('course').value.trim();
         const title = document.getElementById('title').value.trim();
         const targetClass = document.getElementById('targetClass').value.trim();
         const subject = document.getElementById('subject').value.trim();
@@ -175,7 +290,7 @@
 
         try {
             const formData = new FormData();
-            formData.append('file', file); // ✅ FIX: real File object
+            formData.append('file', file);
             formData.append('name', title);
 
             const wistiaData = await uploadWithProgress(formData, file.size);
@@ -186,6 +301,7 @@
             // Firebase me entry save karna
             await addDoc(collection(db, "videos"), {
                 schoolId: adminSchoolId,
+                course: course,
                 targetClass: targetClass,
                 subject: subject,
                 title: title,
@@ -210,7 +326,6 @@
             }, 4000);
 
         } catch (error) {
-            // Agar fail hua to screen par error text dikhega
             uploadStatus.innerText = "❌ Failed: " + error.message;
             uploadStatus.classList.remove('text-blue-600');
             uploadStatus.classList.add('text-red-600');
