@@ -4,11 +4,15 @@
   "rewrites": [
     {
       "source": "/home",
-      "destination": "/dashboard.html"
+      "destination": "/student/dashboard.html"
+    },
+    {
+      "source": "/courses",
+      "destination": "/student/courses.html"
     },
     {
       "source": "/admin-panel",
-      "destination": "/admin/upload-video.html"
+      "destination": "/admin/admin.html"
     }
   ]
 }
