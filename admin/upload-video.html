@@ -175,6 +175,7 @@
     import { collection, addDoc, getDoc, doc, deleteDoc, query, where, onSnapshot, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
+    // DO NOT SHARE THIS TOKEN WITH ANYONE ELSE
     const WISTIA_ACCESS_TOKEN = "52e25c62ca626beb4dc90b4c6207ebc45861e5de7e6569d99c6ee0fe06b6b286";
 
     let adminSchoolId = null;
@@ -190,7 +191,6 @@
     let testUrl = "";
     let pendingDeleteId = null;
     
-    // Edit state variables
     let isEditingCourse = false;
     let editingMetaId = null;
 
@@ -247,9 +247,10 @@
     });
     document.getElementById('testBtn').addEventListener('click', () => testWidget.open());
 
+    // BUG FIX: Getting the correct file object [0]
     const fileInput = document.getElementById('videoFile');
     fileInput.addEventListener('change', (e) => {
-        const file = e.target.files;
+        const file = e.target.files[0]; // FIX: Array ka pehla element chahiye
         if (file) {
             document.getElementById('fileNameText').innerText = file.name;
             document.getElementById('fileNameText').classList.add('text-blue-600');
@@ -272,7 +273,6 @@
     });
 
     function fetchDatabase() {
-        // 🌟 FETCH ALL DATA OF COURSE META
         onSnapshot(query(collection(db, "courseMeta"), where("schoolId", "==", adminSchoolId)), (snap) => {
             allCourseMeta = {};
             snap.forEach(d => { 
@@ -357,7 +357,6 @@
             const photo = meta.photoUrl || 'https://via.placeholder.com/150/e2e8f0/94a3b8?text=Course';
             const safeCourse = course.replace(/'/g, "\\'");
             
-            // 🌟 NAYA DESIGN WITH EDIT BUTTON
             cList.innerHTML += `
                 <div class="bg-white p-3 rounded-[20px] shadow-sm border border-slate-100 flex items-center justify-between gap-3 relative">
                     <div class="flex-1 flex items-center gap-3 cursor-pointer active:scale-95 transition" onclick="selectCourse('${safeCourse}')">
@@ -433,8 +432,6 @@
                 </div>`;
         });
     }
-
-    // ================= MODAL LOGIC (Fix: No more invisible screens!) =================
     
     window.openCourseModal = () => { 
         isEditingCourse = false;
@@ -442,7 +439,7 @@
         
         document.getElementById('modalTitleText').innerText = "Create Premium Batch";
         document.getElementById('newCourseName').value = '';
-        document.getElementById('newCourseName').disabled = false; // Name edit chalu
+        document.getElementById('newCourseName').disabled = false; 
         document.getElementById('coursePrice').value = '';
         document.getElementById('courseOriginalPrice').value = '';
         document.getElementById('courseLanguage').value = '';
@@ -463,7 +460,6 @@
         
         document.getElementById('modalTitleText').innerText = "Edit Premium Batch";
         
-        // Disable course name to prevent orphan videos
         document.getElementById('newCourseName').value = courseName;
         document.getElementById('newCourseName').disabled = true; 
         
@@ -571,8 +567,9 @@
         });
     }
 
+    // BUG FIX: Getting the correct file object [0] inside the submit event
     document.getElementById('videoForm').addEventListener('submit', async () => {
-        const file = fileInput.files;
+        const file = fileInput.files[0]; // FIX: Array ka pehla element chahiye
         if (!file) return alert("Select video file!");
 
         let title = document.getElementById('title').value.trim() || "Untitled";
@@ -605,7 +602,6 @@
                 finalFileName += ".mp4";
             }
             formData.append('file', file, finalFileName);
-            
             formData.append('name', title);
 
             const wistiaData = await uploadWithProgress(formData, file.size);
