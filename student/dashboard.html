@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - AstraCampus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; 
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .glass-card {
+            background: #ffffff;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .premium-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+        }
+
+        .app-btn:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+<body class="pb-24">
+
+<div class="max-w-md mx-auto min-h-screen relative">
+
+    <div class="flex justify-between items-center px-6 pt-8 pb-2">
+        <div>
+            <p class="text-sm text-slate-500 font-medium" id="greetingMsg">Good Morning,</p>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight truncate w-48" id="studentName">Loading...</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full overflow-hidden bg-slate-200 shadow-sm shrink-0 border border-slate-200">
+                <img id="profilePhoto" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-full h-full object-cover">
+            </div>
+            <button id="logoutBtn" class="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition shadow-sm border border-red-100">
+                <i class="fas fa-power-off text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="px-5 mt-4">
+        <div class="premium-gradient rounded-[24px] p-6 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-5 blur-2xl"></div>
+            <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-white opacity-10 blur-xl"></div>
+            
+            <div class="relative z-10 flex justify-between items-start">
+                <div>
+                    <p class="text-indigo-200 text-[11px] font-bold tracking-wider uppercase mb-1">Student ID</p>
+                    <p class="text-xl font-bold tracking-wide mb-6" id="studentId">---</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-lg text-right">
+                    <p class="text-xs font-bold text-white">Class <span id="batchName">...</span></p>
+                </div>
+            </div>
+
+            <div class="relative z-10 flex justify-between items-end border-t border-white/10 pt-4 mt-2">
+                <div onclick="window.location.href='attendance.html'" class="cursor-pointer active:scale-95 transition bg-white/5 px-2 py-1 -ml-2 rounded-lg">
+                    <p class="text-indigo-200 text-[10px] font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                        Attendance <i class="fas fa-chevron-right text-[8px]"></i>
+                    </p>
+                    <p class="text-2xl font-black" id="statAttendance">--%</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-indigo-200 text-[10px] font-bold uppercase tracking-wider mb-1">Fee Due</p>
+                    <p class="text-2xl font-black text-emerald-300" id="statFees">₹0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-5 mt-8">
+        <h2 class="text-base font-bold text-slate-800 mb-4 px-1">Quick Access</h2>
+        <div class="grid grid-cols-4 gap-y-5 gap-x-4" id="quickAccessGrid">
+            
+            <div onclick="window.location.href='live-classes.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-red-500 text-xl">
+                    <i class="fas fa-video"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Live Class</span>
+            </div>
+
+            <div onclick="window.location.href='materials.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-blue-500 text-xl">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Materials</span>
+            </div>
+
+            <div onclick="window.location.href='assignments.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer relative">
+                <span id="statAssignmentsBadge" class="absolute -top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border-2 border-slate-50 shadow-sm z-10">0</span>
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-emerald-500 text-xl">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Homework</span>
+            </div>
+
+            <div onclick="window.location.href='tests.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer relative">
+                <span id="statTestsBadge" class="absolute -top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden border-2 border-slate-50 shadow-sm z-10">0</span>
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-purple-500 text-xl">
+                    <i class="fas fa-laptop-code"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Tests</span>
+            </div>
+
+            <div onclick="window.location.href='results.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-amber-500 text-xl">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Results</span>
+            </div>
+            
+            <div onclick="window.location.href='fees.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-teal-600 text-xl">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Fees</span>
+            </div>
+
+            <div onclick="window.location.href='leave.html'" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-green-600 text-xl">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Leave</span>
+            </div>
+
+            <div id="viewAllBtn" onclick="showAllIcons()" class="flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 text-xl transition hover:bg-slate-100">
+                    <i class="fas fa-ellipsis-h"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">More</span>
+            </div>
+
+            <div onclick="window.location.href='timetable.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-indigo-500 text-xl">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Timetable</span>
+            </div>
+
+            <div onclick="window.location.href='gallery.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-pink-500 text-xl">
+                    <i class="fas fa-images"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Gallery</span>
+            </div>
+
+            <div onclick="window.location.href='complaints.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-orange-500 text-xl">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Complaint</span>
+            </div>
+
+            <div onclick="window.location.href='feedback.html'" class="hidden extra-icon flex flex-col items-center gap-2 app-btn cursor-pointer">
+                <div class="w-14 h-14 rounded-[18px] glass-card flex items-center justify-center text-sky-500 text-xl">
+                    <i class="fas fa-comment-alt"></i>
+                </div>
+                <span class="text-[9.5px] font-bold text-slate-600 text-center">Feedback</span>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="px-5 mt-10">
+        <div class="flex justify-between items-end mb-4 px-1">
+            <h2 class="text-base font-bold text-slate-800">Notice Board</h2>
+            <span onclick="window.location.href='notices.html'" class="text-[10px] font-bold text-indigo-600 uppercase tracking-wide cursor-pointer">View All</span>
+        </div>
+        <div id="announcementContainer">
+            <div class="glass-card rounded-[20px] p-5 text-center">
+                <p class="text-sm text-slate-400 font-medium">Loading notices...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-5 mt-8 mb-6">
+        <h2 class="text-base font-bold text-slate-800 mb-4 px-1">Today's Schedule</h2>
+        <div id="scheduleContainer" class="space-y-3">
+            <div class="glass-card rounded-[20px] p-5 text-center">
+                <p class="text-sm text-slate-400 font-medium">Loading classes...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-slate-100 flex justify-around items-center pt-3 pb-5 z-50 px-2 shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+        <button class="flex flex-col items-center gap-1.5 w-16 text-indigo-600">
+            <i class="fas fa-home text-lg"></i>
+            <span class="text-[9px] font-bold tracking-wide">Home</span>
+        </button>
+        <button onclick="window.location.href='live-classes.html'" class="flex flex-col items-center gap-1.5 w-16 text-slate-400 hover:text-indigo-600 transition">
+            <i class="fas fa-video text-lg"></i>
+            <span class="text-[9px] font-bold tracking-wide">Classes</span>
+        </button>
+        <button onclick="window.location.href='assignments.html'" class="flex flex-col items-center gap-1.5 w-16 text-slate-400 hover:text-indigo-600 transition">
+            <i class="fas fa-clipboard-list text-lg"></i>
+            <span class="text-[9px] font-bold tracking-wide">Tasks</span>
+        </button>
+        <button onclick="window.location.href='profile.html'" class="flex flex-col items-center gap-1.5 w-16 text-slate-400 hover:text-indigo-600 transition">
+            <i class="fas fa-user text-lg"></i>
+            <span class="text-[9px] font-bold tracking-wide">Profile</span>
+        </button>
+        <!-- Lectures -->
+<button onclick="window.location.href='courses.html'"
+    class="bg-indigo-50 p-4 rounded-2xl flex flex-col items-center border border-indigo-100 hover:bg-indigo-100 transition shadow-sm">
+    <i class="fas fa-chalkboard-teacher text-indigo-600 text-2xl mb-2"></i>
+    <span class="text-xs font-bold text-gray-700">Lectures</span>
+</button>
+    </div>
+
+</div>
+
+<script>
+    window.showAllIcons = () => {
+        document.getElementById('viewAllBtn').classList.add('hidden');
+        const extraIcons = document.querySelectorAll('.extra-icon');
+        extraIcons.forEach(icon => {
+            icon.classList.remove('hidden');
+        });
+    };
+</script>
+
+<script type="module">
+    import { auth, db } from '../js/firebase-init.js';
+    import { doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+    const hour = new Date().getHours();
+    document.getElementById('greetingMsg').innerText = hour < 12 ? 'Good Morning,' : (hour < 18 ? 'Good Afternoon,' : 'Good Evening,');
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const schoolId = userData.schoolId; 
+                
+                // Profile Setup
+                document.getElementById('studentName').innerText = userData.name || userData.firstName || 'Student';
+                document.getElementById('studentId').innerText = userData.studentId || userData.admissionNo || 'N/A';
+                let clsText = userData.class ? `${userData.class}` : 'N/A';
+                let secText = userData.section ? ` ${userData.section}` : '';
+                document.getElementById('batchName').innerText = clsText + secText;
+
+                if(userData.photoUrl || userData.photoBase64) {
+                    document.getElementById('profilePhoto').src = userData.photoUrl || userData.photoBase64;
+                }
+
+                // Fees
+                const totalFee = userData.totalFee || 0;
+                const paidFee = userData.paidFee || 0;
+                const pendingFee = totalFee - paidFee;
+                document.getElementById('statFees').innerText = "₹" + pendingFee;
+
+                const targetClassStr = String(userData.class || "");
+
+                // Assignments Logic
+                const assignQuery = query(collection(db, "assignments"), where("schoolId", "==", schoolId));
+                onSnapshot(assignQuery, (snapshot) => {
+                    let filteredAssigns = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
+                    
+                    const badge = document.getElementById('statAssignmentsBadge');
+                    if(filteredAssigns.length > 0) {
+                        badge.innerText = filteredAssigns.length;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                });
+
+                // Live Classes Logic
+                const classQuery = query(collection(db, "live_classes"), where("schoolId", "==", schoolId));
+                onSnapshot(classQuery, (snapshot) => {
+                    const scheduleContainer = document.getElementById('scheduleContainer');
+                    let filteredClasses = snapshot.docs.filter(d => String(d.data().targetClass || d.data().className || "") === targetClassStr);
+                    
+                    filteredClasses.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+
+                    if (filteredClasses.length === 0) {
+                        scheduleContainer.innerHTML = `<div class="glass-card rounded-[20px] p-6 text-center"><p class="text-sm text-slate-400 font-medium">Relax, no classes scheduled for today.</p></div>`;
+                    } else {
+                        scheduleContainer.innerHTML = "";
+                        filteredClasses.forEach((docSnap) => {
+                            const data = docSnap.data();
+                            scheduleContainer.innerHTML += `
+                                <div class="glass-card p-4 rounded-[20px] flex items-center gap-4 text-left">
+                                    <div class="w-12 h-12 rounded-[14px] bg-red-50 flex items-center justify-center shrink-0 border border-red-100">
+                                        <i class="fas fa-video text-red-500 text-lg"></i>
+                                    </div>
+                                    <div class="flex-grow min-w-0">
+                                        <h4 class="font-bold text-slate-800 text-sm truncate">${data.subject || data.title || 'Live Class'}</h4>
+                                        <p class="text-[11px] text-slate-500 font-medium mt-0.5"><i class="far fa-clock mr-1"></i>Tap to join</p>
+                                    </div>
+                                    <a href="${data.meetingLink || '#'}" target="_blank" class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 shadow-md shadow-indigo-600/30 hover:bg-indigo-700 transition">
+                                        <i class="fas fa-play text-white text-xs ml-0.5"></i>
+                                    </a>
+                                </div>
+                            `;
+                        });
+                    }
+                });
+
+                // Notices Logic
+                const noticeQuery = query(collection(db, "announcements"), where("schoolId", "==", schoolId));
+                onSnapshot(noticeQuery, (snapshot) => {
+                    const noticeContainer = document.getElementById('announcementContainer');
+                    if(snapshot.empty) {
+                        noticeContainer.innerHTML = `<div class="glass-card rounded-[20px] p-5 text-center"><p class="text-sm text-slate-400 font-medium">No new announcements.</p></div>`;
+                    } else {
+                        let allNotices = [...snapshot.docs];
+                        allNotices.sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0));
+                        
+                        const data = allNotices.data(); 
+                        noticeContainer.innerHTML = `
+                            <div class="glass-card p-4 rounded-[20px] flex items-start gap-4 border-l-4 border-l-amber-400">
+                                <div class="w-10 h-10 rounded-[14px] bg-amber-50 flex items-center justify-center shrink-0 text-amber-500">
+                                    <i class="fas fa-bullhorn text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm mb-1">${data.title}</h4>
+                                    <p class="text-xs text-slate-600 leading-relaxed line-clamp-2">${data.description}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                // Attendance Logic (Perfectly Linked & Working)
+                const attQuery = query(collection(db, "attendance"), where("schoolId", "==", schoolId));
+                onSnapshot(attQuery, (snapshot) => {
+                    let presentCount = 0;
+                    let totalCount = 0;
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if(data.studentId === user.uid || data.studentEmail === user.email) {
+                            totalCount++;
+                            if(data.status === 'present') presentCount++;
+                        }
+                    });
+                    
+                    let percentage = totalCount === 0 ? "N/A" : Math.round((presentCount / totalCount) * 100) + "%";
+                    document.getElementById('statAttendance').innerText = percentage;
+                });
+
+            } else {
+                window.location.href = "../index.html"; 
+            }
+        } else {
+            window.location.href = "../index.html"; 
+        }
+    });
+
+    // Logout Functionality
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if(confirm("Are you sure you want to log out?")) {
+            try {
+                await signOut(auth);
+                window.location.href = "../index.html";
+            } catch(error) {
+                console.error("Logout Error:", error);
+                alert("Failed to log out. Please try again.");
+            }
+        }
+    });
+</script>
+</body>
+</html>
+                    
+                    
